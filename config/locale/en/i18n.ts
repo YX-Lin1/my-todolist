@@ -1,0 +1,142 @@
+export default {
+  title: "Internationalization",
+  description:
+    "Multi-language support with date, number, and message formatting.",
+  pages: {
+    overview: "Overview",
+    formatter: "Date & Number Formatting",
+    icu: "ICU Message Format",
+  },
+  introduction: {
+    title: "Internationalization",
+    description:
+      "`@surgeteam/i18n` is the unified internationalization package for Surge Next.js Framework: built on <link>next-intl</link> with centralized config registration, plug-and-play integration, and reduced boilerplate while preserving next-intl core behaviors.",
+    featuresTitle: "Features",
+    features: {
+      nextIntlWrap:
+        "🌐 next-intl wrapper: handles integration and setup without replacing core capabilities.",
+      singleConfig:
+        "📋 Single source of config: routing, middleware, request config, and navigation share one registered config.",
+      simplifyApi:
+        "🔌 Simplified APIs: navigation, createI18nMiddleware(), and getRequestConfig() work without repeatedly passing routing.",
+      translationApi:
+        "📝 Unified translation APIs: useI18n() on client and getI18n() on server expose aligned capabilities.",
+      localeNavigation:
+        "🧭 Locale-aware navigation: Link, usePathname, useRouter, and related APIs handle locale prefixes automatically.",
+      formatter:
+        "📅 Formatting suite: date/time, number, currency, list, and relative time via named format presets.",
+      timezone:
+        "🕐 Timezone support: reads user timezone and keeps behavior consistent across server and client.",
+      frameworkIntegration:
+        "⚙️ Framework integration: works with register-configs to register locale, timezone, and formats centrally.",
+      apiDbIntegration:
+        "🔗 API/DB integration: can coordinate user locale and timezone with backend data.",
+    },
+    conceptsTitle: "Core Concepts",
+    relationshipTitle: "Relationship with next-intl",
+    relationshipDescription:
+      "This package is a second-layer wrapper over next-intl. Translation, formatting, routing, and middleware capabilities are all implemented on top of next-intl APIs.",
+    relationshipDetail:
+      "At the app layer, prefer the interfaces and config entry points from this package for a consistent developer experience and stable project conventions.",
+    clientTitle: "Client: useI18n and navigation",
+    clientDescription:
+      "In Client Components, use useI18n() for t, format* helpers, locale, and timeZone, and use @surgeteam/i18n/navigation for locale-aware navigation.",
+    serverTitle: "Server: getI18n",
+    serverDescription:
+      "In Server Components, Route Handlers, or Server Actions, use getI18n() to access APIs aligned with useI18n().",
+    formatPresetTitle: "Formatting and Presets",
+    formatPresetDescription:
+      "Currency, number, date/time, relative time, and list formatting are all called by named presets. Unified presets improve semantic consistency and readability.",
+    tryDemosTitle: "Explore the demos",
+    tryDemosDescription: "Continue with the concrete demo pages:",
+  },
+  formatter: {
+    title: "Date & Number Formatting",
+    description: "Locale-aware formatting for dates, times, and numbers.",
+    back: "Back",
+    loading: "Loading…",
+    dateTimeTitle: "Date & Time",
+    dateTimeDescription: "Various date and time formats.",
+    shortDate: "Short date",
+    shortDateWithTime: "Short date with time",
+    shortDateWithTimeSeconds: "Short date with time (seconds)",
+    longDate: "Long date",
+    longDateWithTime: "Long date with time",
+    longDateWithTimeSeconds: "Long date with time (seconds)",
+    weekday: "Weekday",
+    numberTitle: "Numbers",
+    numberDescription: "Various number formats.",
+    decimalFormat: "Decimal",
+    compactFormat: "Compact",
+    currencyFormat: "Currency",
+    compactCurrencyFormat: "Compact currency",
+    decimalFormatSmall: "Decimal (small)",
+    negativeCurrencyFormat: "Negative currency",
+    percentFormat: "Percent",
+    accountingCurrencyFormat: "Accounting currency",
+    relativeTimeTitle: "Relative time",
+    relativeTimeDescription: "Time relative to now (e.g. “2 hours ago”).",
+    relativeTimePast: "Past (long)",
+    relativeTimeFuture: "Future (short)",
+    referenceTimeLabel: "Reference time (now)",
+    referenceTimeDescription:
+      "Change to recalculate the demos below. Passed as options.now / options.relativeOptions.now.",
+    referenceTimeReset: "Reset to current",
+    referenceTimeDate: "Date",
+    referenceTimeTime: "Time",
+    smartRelativeTime: "Smart relative time",
+    smartRelativeTimeRecent: "Within threshold (7 days, relative)",
+    smartRelativeTimeOld: "Beyond threshold (7 days, absolute)",
+    dateRangeTitle: "Date range",
+    dateRangeDescription: "Format a range of two dates.",
+    dateRangeExample: "Same-day range",
+    listTitle: "List formatting",
+    listDescription: "Conjunction and disjunction (e.g. “A, B, and C”).",
+    listConjunction: "Conjunction (and)",
+    listDisjunction: "Disjunction (or)",
+  },
+  icu: {
+    title: "ICU Message Format",
+    description: "Pluralization, gender, and parameter interpolation.",
+    back: "Back",
+    loading: "Loading…",
+    messageSourceLabel: "Message (EN)",
+    pluralTitle: "Pluralization",
+    pluralDescription: "Count-based message variants.",
+    countLabel: "Count",
+    resetButton: "Reset",
+    itemsZero: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    itemsOne: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    itemsMany: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    exampleValues: "Example values",
+    selectTitle: "Gender Selection",
+    selectDescription: "Gender-based message variants.",
+    genderLabel: "Gender",
+    genderMaleLabel: "Male",
+    genderFemaleLabel: "Female",
+    genderOtherLabel: "Other",
+    genderMale: "{gender, select, male {He} female {She} other {They}}",
+    genderFemale: "{gender, select, male {He} female {She} other {They}}",
+    genderOther: "{gender, select, male {He} female {She} other {They}}",
+    parameterTitle: "Parameters",
+    parameterDescription: "Variable interpolation in messages.",
+    nameLabel: "Name",
+    namePlaceholder: "Enter name",
+    greeting: "Hello, {name}!",
+    complexTitle: "Complex Message",
+    complexDescription: "Combining plural and select.",
+    complexMessage:
+      "{count, plural, =0 {No items} one {# item} other {# items}} — {gender, select, male {He} female {She} other {They}}",
+    dateInMessageTitle: "Date in message",
+    dateInMessageDescription:
+      "Format a date inside an ICU message with '{date, date, format}'.",
+    dateInMessageExample: "Event on {eventDate, date, ::yyyyMMMdHHmmss}",
+    dateInMessageDateLabel: "Date",
+    dateInMessageTimeLabel: "Time",
+    dateInMessageReset: "Reset to now",
+    listInMessageTitle: "List in message",
+    listInMessageDescription:
+      "Pass a pre-formatted list (formatList) as a parameter into a message.",
+    listInMessageExample: "You selected: {items}",
+  },
+};

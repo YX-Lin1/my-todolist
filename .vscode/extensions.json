@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "bradlc.vscode-tailwindcss",
+    "csstools.postcss",
+    "lokalise.i18n-ally",
+    "subframe7536.theme-maple",
+    "Prisma.prisma",
+    "unifiedjs.vscode-mdx",
+    "mikestead.dotenv",
+    "christian-kohler.npm-intellisense",
+    "biomejs.biome"
+  ]
+}

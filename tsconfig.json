@@ -1,0 +1,22 @@
+{
+  "extends": "@surgeteam/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@surgeteam/design-system": ["./library/surge/design-system/index.tsx"],
+      "@surgeteam/design-system/*": ["./library/surge/design-system/*"],
+    },
+    // TSyringe required
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["__tests__/sign-in.test.tsx", "__tests__/sign-up.test.tsx"]
+}
