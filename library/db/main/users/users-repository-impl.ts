@@ -34,10 +34,12 @@ export class UsersRepositoryImpl implements UsersRepository {
       .insert(usersTable)
       .values({
         id: request.data.id,
-        tagsStr: request.data.tagsStr ?? null,
-        bio: request.data.bio ?? null,
-        avatarUrl: request.data.avatarUrl ?? null,
-        extraJson: request.data.extraJson ?? null,
+        account: request.data.account,
+        password: request.data.password,
+        email: request.data.email,
+        status: request.data.status,
+        created_at: request.data.created_at,
+        updated_at: request.data.updated_at,
       })
       .returning();
     const row = inserted[0];
@@ -48,19 +50,18 @@ export class UsersRepositoryImpl implements UsersRepository {
   }
 
   async update(request: UsersUpdateRequest): Promise<UsersUpdateResponse> {
+    const now = new Date();
     const updated = await this.db
       .update(usersTable)
       .set({
-        ...(request.data.tagsStr !== undefined && {
-          tagsStr: request.data.tagsStr,
+        ...(request.data.account !== undefined && {
+          account: request.data.account,
         }),
-        ...(request.data.bio !== undefined && { bio: request.data.bio }),
-        ...(request.data.avatarUrl !== undefined && {
-          avatarUrl: request.data.avatarUrl,
-        }),
-        ...(request.data.extraJson !== undefined && {
-          extraJson: request.data.extraJson,
-        }),
+        ...(request.data.password !== undefined && { password: request.data.password }),
+        ...(request.data.email !== undefined && { email: request.data.email }),
+        ...(request.data.status !== undefined && { status: request.data.status }),
+        ...(request.data.created_at !== undefined && { created_at: request.data.created_at }),
+        updated_at: now,
       })
       .where(eq(usersTable.id, request.id))
       .returning();

@@ -7,11 +7,11 @@ export interface UsersGetRequest {
 }
 
 export interface UsersCreateRequest {
-  /** Full row; id is snowflake from caller. */
   data: UsersTableRow;
 }
 
 export interface UsersUpdateRequest {
+  // 只传入需要更新的字段
   data: Partial<UsersTableRow>;
   id: UsersTableRow["id"];
 }
