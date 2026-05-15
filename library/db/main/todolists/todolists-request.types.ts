@@ -1,4 +1,4 @@
-import type { todoTable } from "@library/db/main/drizzle/schema/main-schema/todolists-table";
+import type { todoTable } from "@/library/db/main/drizzle/schema/main-schema/todolists-table";
 
 type TodoTableRow = typeof todoTable.$inferSelect;
 
@@ -7,7 +7,7 @@ export interface TodoGetRequest {
 }
 
 export interface TodoFindByUserIdRequest {
-  userId: TodoTableRow["userId"];
+  user_id: TodoTableRow["user_id"];
 }
 
 export interface TodoCreateRequest {

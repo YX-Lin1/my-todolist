@@ -36,7 +36,7 @@ export class TodoRepositoryImpl implements TodoRepository {
       const rows = await this.db
         .select()
         .from(todoTable)
-        .where(eq(todoTable.userId, request.userId));
+        .where(eq(todoTable.user_id, request.user_id));
       return rows;
     }
   
