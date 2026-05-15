@@ -7,12 +7,14 @@ import type {
   TodoFindByUserIdRequest,
   TodoGetRequest,
   TodoUpdateRequest,
+  TodoDeleteRequest,
 } from "@/library/db/main/todolists/todolists-request.types";
 import type {
   TodoCreateResponse,
   TodoFindByUserIdResponse,
   TodoGetResponse,
   TodoUpdateResponse,
+  TodoDeleteResponse,
 } from "@/library/db/main/todolists/todolists-response.types";
 
 export class TodoRepositoryImpl implements TodoRepository {
@@ -83,6 +85,17 @@ export class TodoRepositoryImpl implements TodoRepository {
         throw new Error("TodoRepository.update: row not found");
       }
       return row;
+    }
+
+    async delete(request: TodoDeleteRequest): Promise<TodoDeleteResponse> {
+      const deleted = await this.db
+        .delete(todoTable)
+        .where(eq(todoTable.id, request.id))
+        .returning();
+      if (deleted.length === 0) {
+        throw new Error("TodoRepository.delete: row not found");
+      }
+      return deleted[0];
     }
   }
   

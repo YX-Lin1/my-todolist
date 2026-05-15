@@ -6,3 +6,4 @@ export type TodoGetResponse = TodoRowResponse | null;
 export type TodoFindByUserIdResponse = TodoRowResponse[];
 export type TodoCreateResponse = TodoRowResponse;
 export type TodoUpdateResponse = TodoRowResponse;
+export type TodoDeleteResponse = TodoRowResponse;

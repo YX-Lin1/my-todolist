@@ -18,3 +18,7 @@ export interface TodoUpdateRequest {
   data: Partial<TodoTableRow>;
   id: TodoTableRow["id"];
 }
+
+export interface TodoDeleteRequest {
+  id: TodoTableRow["id"];
+}
