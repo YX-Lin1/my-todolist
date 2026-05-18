@@ -5,3 +5,4 @@ type UsersRowResponse = typeof usersTable.$inferSelect;
 export type UsersGetResponse = UsersRowResponse | null;
 export type UsersCreateResponse = UsersRowResponse;
 export type UsersUpdateResponse = UsersRowResponse;
+export type UsersDeleteResponse = UsersRowResponse;

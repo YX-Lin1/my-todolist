@@ -15,3 +15,7 @@ export interface UsersUpdateRequest {
   data: Partial<UsersTableRow>;
   id: UsersTableRow["id"];
 }
+
+export interface UsersDeleteRequest {
+  id: UsersTableRow["id"];
+}

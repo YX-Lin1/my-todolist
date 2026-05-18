@@ -6,11 +6,13 @@ import type {
   UsersCreateRequest,
   UsersGetRequest,
   UsersUpdateRequest,
+  UsersDeleteRequest,
 } from "@/library/db/main/users/users-request.types";
 import type {
   UsersCreateResponse,
   UsersGetResponse,
   UsersUpdateResponse,
+  UsersDeleteResponse,
 } from "@/library/db/main/users/users-response.types";
 
 export class UsersRepositoryImpl implements UsersRepository {
@@ -68,6 +70,18 @@ export class UsersRepositoryImpl implements UsersRepository {
     const row = updated[0];
     if (!row) {
       throw new Error("UsersRepository.update: row not found");
+    }
+    return row;
+  }
+
+  async delete(request: UsersDeleteRequest): Promise<UsersDeleteResponse> {
+    const deleted = await this.db
+      .delete(usersTable)
+      .where(eq(usersTable.id, request.id))
+      .returning();
+    const row = deleted[0];
+    if (!row) {
+      throw new Error("UsersRepository.delete: row not found");
     }
     return row;
   }
