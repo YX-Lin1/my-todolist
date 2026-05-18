@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import type { MainDbClient } from "@/library/db/main/client";
 import { usersTable } from "@/library/db/main/drizzle/schema/main-schema/users-table";
 import type { UsersRepository } from "@/library/db/main/users/users-repository";
@@ -7,12 +7,14 @@ import type {
   UsersGetRequest,
   UsersUpdateRequest,
   UsersDeleteRequest,
+  UsersListRequest,
 } from "@/library/db/main/users/users-request.types";
 import type {
   UsersCreateResponse,
   UsersGetResponse,
   UsersUpdateResponse,
   UsersDeleteResponse,
+  UsersListResponse,
 } from "@/library/db/main/users/users-response.types";
 
 export class UsersRepositoryImpl implements UsersRepository {
@@ -84,5 +86,21 @@ export class UsersRepositoryImpl implements UsersRepository {
       throw new Error("UsersRepository.delete: row not found");
     }
     return row;
+  }
+
+  // _request: UsersListRequest 是 {}，暂时用不到，加下划线避免未使用参数告警
+  async list(_request: UsersListRequest): Promise<UsersListResponse> {
+    const rows = await this.db
+      .select({
+        id: usersTable.id,
+        account: usersTable.account,
+        email: usersTable.email,
+        status: usersTable.status,
+        created_at: usersTable.created_at,
+        updated_at: usersTable.updated_at,
+      })
+      .from(usersTable)
+      .orderBy(desc(usersTable.created_at));
+    return rows;
   }
 }

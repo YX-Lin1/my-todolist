@@ -6,3 +6,6 @@ export type UsersGetResponse = UsersRowResponse | null;
 export type UsersCreateResponse = UsersRowResponse;
 export type UsersUpdateResponse = UsersRowResponse;
 export type UsersDeleteResponse = UsersRowResponse;
+
+export type UsersListItem = Pick<UsersRowResponse, "id" | "account" | "email" | "status" | "created_at" | "updated_at">;
+export type UsersListResponse = UsersListItem[];

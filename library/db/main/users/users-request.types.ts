@@ -19,3 +19,5 @@ export interface UsersUpdateRequest {
 export interface UsersDeleteRequest {
   id: UsersTableRow["id"];
 }
+
+export interface UsersListRequest { }
