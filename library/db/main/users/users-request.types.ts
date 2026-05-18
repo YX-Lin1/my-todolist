@@ -21,3 +21,7 @@ export interface UsersDeleteRequest {
 }
 
 export interface UsersListRequest { }
+
+export interface UsersFindByAccountRequest {
+  account: UsersTableRow["account"];
+}

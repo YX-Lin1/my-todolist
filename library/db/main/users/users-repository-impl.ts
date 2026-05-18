@@ -8,6 +8,7 @@ import type {
   UsersUpdateRequest,
   UsersDeleteRequest,
   UsersListRequest,
+  UsersFindByAccountRequest,
 } from "@/library/db/main/users/users-request.types";
 import type {
   UsersCreateResponse,
@@ -15,6 +16,7 @@ import type {
   UsersUpdateResponse,
   UsersDeleteResponse,
   UsersListResponse,
+  UsersFindByAccountResponse,
 } from "@/library/db/main/users/users-response.types";
 
 export class UsersRepositoryImpl implements UsersRepository {
@@ -102,5 +104,14 @@ export class UsersRepositoryImpl implements UsersRepository {
       .from(usersTable)
       .orderBy(desc(usersTable.created_at));
     return rows;
+  }
+
+  async findByAccount(request: UsersFindByAccountRequest): Promise<UsersFindByAccountResponse> {
+    const rows = await this.db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.account, request.account))
+      .limit(1);
+    return rows[0] ?? null;
   }
 }
