@@ -7,6 +7,8 @@ import type { ProductsRepository } from "./products/products-repository";
 import { ProductsRepositoryImpl } from "./products/products-repository-impl";
 import type { UsersRepository } from "./users/users-repository";
 import { UsersRepositoryImpl } from "./users/users-repository-impl";
+import type {TodoRepository} from "./todolists/todolists-repository";
+import {TodoRepositoryImpl} from "./todolists/todolists-repository-impl";
 
 const mainDbMap = {
   MainDbClient: () => createMainDbClient(),
@@ -16,6 +18,8 @@ const mainDbMap = {
     new OrdersRepositoryImpl(resolver.get(MainDbTokens.mainDbClient)),
   ProductsRepository: (resolver: ResolverShape): ProductsRepository =>
     new ProductsRepositoryImpl(resolver.get(MainDbTokens.mainDbClient)),
+  TodoRepository: (resolver: ResolverShape): TodoRepository =>
+    new TodoRepositoryImpl(resolver.get(MainDbTokens.mainDbClient)),
 };
 
 const mainDbResources = defineResources(mainDbMap, {
