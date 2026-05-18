@@ -5,10 +5,18 @@ import type { UsersService } from "@/library/services/users/users-service";
 import { UsersServiceImpl } from "@/library/services/users/users-service-impl";
 import { serviceErrorProxy } from "./error";
 
+import { LoginServiceImpl } from "./login/login-service-impl";
+import type { LoginService } from "./login/login-service";
+import { MainDbTokens } from "../db/main/registrations";
+
 const servicesMap = {
   UsersService: (resolver: ResolverShape): UsersService =>
     serviceErrorProxy(
       new UsersServiceImpl(resolver.get(MainApiTokens.usersApi))
+    ),
+  LoginService: (resolver: ResolverShape): LoginService =>
+    serviceErrorProxy(
+      new LoginServiceImpl(resolver.get(MainDbTokens.usersRepository))
     ),
 };
 

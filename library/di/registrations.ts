@@ -12,6 +12,8 @@ import {
   servicesGetters,
 } from "@/library/services/registrations";
 
+import { registerMainDb } from "@/library/db/main/registrations";
+
 /**
  * Nested container: mainApi / mainDb / services namespace.
  */
@@ -23,6 +25,7 @@ export interface AppContainer {
 /** Populate the shared registry once at init for this container factory. */
 export function registerAll(registry: RegistryManagerShape): void {
   registerMainApi(registry);
+  registerMainDb(registry);
   registerServices(registry);
 }
 
