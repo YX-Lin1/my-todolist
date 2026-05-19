@@ -32,7 +32,6 @@ export const TodolistsDeleteResponseSchema = z.object({
   }),
 });
 
-/** Service 层对外返回类型（由 Zod schema 推断，供 interface / impl 使用） */
 export type TodolistsListResponse = z.infer<typeof TodolistsListResponseSchema>;
 export type TodolistsCreateResponse = z.infer<
   typeof TodolistsCreateResponseSchema

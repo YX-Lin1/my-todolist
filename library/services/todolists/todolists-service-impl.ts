@@ -36,7 +36,7 @@ export class TodolistsServiceImpl implements TodolistsService {
     // 1. 运行时校验入参（与 users-service-impl 相同模式）
     parseRequest(TodolistsListRequestSchema, request);
 
-    // 2. 只按服务端提供的 userId 查询，不信任 request 里的用户字段
+    // 2. 只按服务端提供的 userId 查询
     const rows = await this.todoRepository.findByUserId({
       user_id: ctx.userId,
     });
@@ -56,7 +56,6 @@ export class TodolistsServiceImpl implements TodolistsService {
         id: crypto.randomUUID(),
         user_id: ctx.userId,
         todo: data.todo,
-        // 与旧项目一致：新建待办默认未完成，不采用客户端传入的 completed
         completed: false,
         // Repository 插入时会覆盖为 now；此处满足 TodoTableRow 类型占位
         created_at: null,
