@@ -6,8 +6,8 @@ export const LoginUserSchema = z
       account: z.string(),
       email: z.string(),
       status: z.boolean(),
-      createdAt: z.coerce.date(),
-      updatedAt: z.coerce.date(),
+      created_at: z.coerce.date(),
+      updated_at: z.coerce.date(),
   });
 export const LoginPostResponseSchema = z.object({
     token: z.string(), 

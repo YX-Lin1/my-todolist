@@ -8,6 +8,8 @@ import { serviceErrorProxy } from "./error";
 import { LoginServiceImpl } from "./login/login-service-impl";
 import type { LoginService } from "./login/login-service";
 import { MainDbTokens } from "../db/main/registrations";
+import type { TodolistsService } from "./todolists/todolists-service";
+import { TodolistsServiceImpl } from "./todolists/todolists-service-impl";
 
 const servicesMap = {
   UsersService: (resolver: ResolverShape): UsersService =>
@@ -17,6 +19,10 @@ const servicesMap = {
   LoginService: (resolver: ResolverShape): LoginService =>
     serviceErrorProxy(
       new LoginServiceImpl(resolver.get(MainDbTokens.usersRepository))
+    ),
+  TodolistsService: (resolver: ResolverShape): TodolistsService =>
+    serviceErrorProxy(
+      new TodolistsServiceImpl(resolver.get(MainDbTokens.todoRepository))
     ),
 };
 

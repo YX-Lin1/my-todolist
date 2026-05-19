@@ -12,8 +12,8 @@ export function loginPostResponseMapper(
       account: row.account,
       email: row.email,
       status: row.status,
-      createdAt: row.created_at ?? new Date(),
-      updatedAt: row.updated_at ?? new Date(),
+      created_at: row.created_at ?? new Date(),
+      updated_at: row.updated_at ?? new Date(),
     },
   };
 }
