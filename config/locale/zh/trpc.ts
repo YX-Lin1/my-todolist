@@ -3,6 +3,7 @@ export default {
   pages: {
     overview: "概述",
     users: "Users（客户端 + tRPC）",
+    login: "Login（客户端 + tRPC）",
   },
   introduction: {
     title: "tRPC",

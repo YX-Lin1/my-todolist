@@ -3,6 +3,7 @@ export default {
   pages: {
     overview: "概要",
     users: "Users（Client + tRPC）",
+    login: "Login（Client + tRPC）",
   },
   introduction: {
     title: "tRPC",
