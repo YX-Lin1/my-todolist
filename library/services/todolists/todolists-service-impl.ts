@@ -33,7 +33,7 @@ export class TodolistsServiceImpl implements TodolistsService {
     request: TodolistsListRequest,
     ctx: { userId: string }
   ): Promise<TodolistsListResponse> {
-    // 1. 运行时校验入参（与 users-service-impl 相同模式）
+    // 1. 运行时校验入参
     parseRequest(TodolistsListRequestSchema, request);
 
     // 2. 只按服务端提供的 userId 查询
