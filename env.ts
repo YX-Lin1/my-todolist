@@ -9,11 +9,16 @@ import z from "zod";
 
 export const env = createEnv({
   extends: [analytics(), core(), observability(), security(), i18n()],
-  server: {},
+  server: {
+    DATABASE_MAIN_URL: z.string().min(1),
+    MOCK_USER_ID: z.string().uuid().optional(), 
+  },
   client: {
     NEXT_PUBLIC_MAIN_API_URL: z.url(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_MAIN_API_URL: process.env.NEXT_PUBLIC_MAIN_API_URL,
+    DATABASE_MAIN_URL: process.env.DATABASE_MAIN_URL,
+    MOCK_USER_ID: process.env.MOCK_USER_ID,
   },
 });

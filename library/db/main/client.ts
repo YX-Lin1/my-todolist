@@ -14,7 +14,11 @@ export function createMainDbClient(options?: MainDbClientOptions) {
   if (!url) {
     throw new Error("DATABASE_MAIN_URL is required for main DB");
   }
-  const sql = postgres(url, { max: options?.maxConnections ?? 10 });
+  const sql = postgres(url, {
+    max: options?.maxConnections ?? 10,
+    ssl: "require",
+    connect_timeout: 15,
+  });
   return drizzle(sql, { schema });
 }
 

@@ -273,6 +273,7 @@ import { env } from "@/env";
 | 现象 | 可能原因 | 处理 |
 |------|----------|------|
 | 一直 `UNAUTHORIZED` | 未配置 `MOCK_USER_ID`、拼写错误、未重启 dev | 检查 `.env.local` 并重启 |
+| `INTERNAL_ERROR` / `ENOTFOUND db.*.supabase.co` | 直连仅 IPv6，本机/公司网解析失败 | 改用控制台 **Session pooler** URI（`aws-*-<region>.pooler.supabase.com`，用户 `postgres.<ref>`） |
 | `create` 外键或写入失败 | Mock id 不在 `public.users` | 换 Supabase 中存在的 `id` |
 | IDE 仍报 `ctx.userId` 不存在 | 未改 `context.ts` 或 TS 服务未刷新 | 保存 `context.ts`，重启 TS Server |
 | `create` 仍类型报错 | 第二参数仍是 `ctx.userId` 字符串 | 改为 `{ userId: ctx.userId }` |
