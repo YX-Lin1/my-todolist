@@ -34,6 +34,7 @@ export class TodolistsServiceImpl implements TodolistsService {
     ctx: { userId: string }
   ): Promise<TodolistsListResponse> {
     // 1. 运行时校验入参
+    // 第一个参数是校验规则，第二个参数是要被检查的数据
     parseRequest(TodolistsListRequestSchema, request);
 
     // 2. 只按服务端提供的 userId 查询
@@ -106,6 +107,8 @@ export class TodolistsServiceImpl implements TodolistsService {
   private async assertTodoOwnedByUser(
     todoId: string,
     userId: string
+  // promise<void> 表示这个函数没有返回值
+  // promise表示等异步执行完成再返回
   ): Promise<void> {
     const existing = await this.todoRepository.get({ id: todoId });
     if (!existing || existing.user_id !== userId) {
