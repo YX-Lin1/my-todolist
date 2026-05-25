@@ -33,12 +33,6 @@ export const TodolistsDeleteResponseSchema = z.object({
 });
 
 export type TodolistsListResponse = z.infer<typeof TodolistsListResponseSchema>;
-export type TodolistsCreateResponse = z.infer<
-  typeof TodolistsCreateResponseSchema
->;
-export type TodolistsUpdateResponse = z.infer<
-  typeof TodolistsUpdateResponseSchema
->;
-export type TodolistsDeleteResponse = z.infer<
-  typeof TodolistsDeleteResponseSchema
->;
+export type TodolistsCreateResponse = z.infer<typeof TodolistsCreateResponseSchema>;
+export type TodolistsUpdateResponse = z.infer<typeof TodolistsUpdateResponseSchema>;
+export type TodolistsDeleteResponse = z.infer<typeof TodolistsDeleteResponseSchema>;
