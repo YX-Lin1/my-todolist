@@ -13,4 +13,8 @@ export default {
     title: "用户数据演示",
     description: "通过服务层获取用户数据，含校验与类型化响应。",
   },
+  todolists: {
+    title: "待办事项管理系统",
+    description: "欢迎使用待办事项管理系统。",
+  },
 };

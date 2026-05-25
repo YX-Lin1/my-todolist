@@ -1,0 +1,14 @@
+export default {
+  title: "待办事项管理系统",
+  welcomeTitle: "Welcome to TodoLists Management System",
+  listTitle: "待办事项列表",
+  searchPlaceholder: "请输入关键词...",
+  addPlaceholder: "请输入待办事项...",
+  search: "搜索",
+  add: "添加",
+  delete: "删除",
+  empty: "暂无待办事项，请添加！",
+  stats: "总计：{total} 项 | 已完成：{done} 项 | 未完成：{pending} 项",
+  loading: "加载中…",
+  errorTitle: "操作失败",
+};
