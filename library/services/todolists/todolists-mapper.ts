@@ -27,6 +27,8 @@ function mapListRow(row: TodoRow) {
 export function todolistsListResponseMapper(
   rows: TodoRow[]
 ): TodolistsListResponse {
+  // parseResponse()第一个参数是校验规则，第二个参数是要被检查的数据
+  // parseResponse检查传到上层的数据是否符合规则
   return parseResponse(TodolistsListResponseSchema, {
     data: rows.map(mapListRow),
   });

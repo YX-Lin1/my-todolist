@@ -34,7 +34,8 @@ export class TodolistsServiceImpl implements TodolistsService {
     ctx: { userId: string }
   ): Promise<TodolistsListResponse> {
     // 1. 运行时校验入参
-    // 第一个参数是校验规则，第二个参数是要被检查的数据
+    // parseRequest()第一个参数是校验规则，第二个参数是要被检查的数据
+    // parseRequest检查传进来的数据是否符合规则
     parseRequest(TodolistsListRequestSchema, request);
 
     // 2. 只按服务端提供的 userId 查询
