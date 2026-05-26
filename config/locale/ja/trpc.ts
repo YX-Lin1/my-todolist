@@ -3,6 +3,7 @@ export default {
   pages: {
     overview: "概要",
     users: "Users（Client + tRPC）",
+    todolists: "Todolists（Client + tRPC）",
     login: "Login（Client + tRPC）",
   },
   introduction: {
@@ -65,6 +66,20 @@ export default {
     },
     errorTitle: "リクエストに失敗しました",
     errorHint: "API 設定と id の存在を確認してください。",
+    errorDetailsLabel: "詳細",
+  },
+  todolists: {
+    title: "Todolists（Client Component デモ）",
+    lead: "ページ表示時に trpc.todolists.list.useQuery({}) を呼び出します。list 手続きと MOCK_USER_ID 認証のスモークテスト用です。",
+    loading: "読み込み中...",
+    resultTitle: "レスポンス",
+    friendly: {
+      title: "一覧サマリー",
+      summary: "合計 {total} 件 | 完了 {done} 件 | 未完了 {pending} 件",
+    },
+    errorTitle: "リクエストに失敗しました",
+    errorHint:
+      "DATABASE_MAIN_URL と MOCK_USER_ID を確認し、dev サーバーを再起動してください。",
     errorDetailsLabel: "詳細",
   },
 };

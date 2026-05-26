@@ -3,6 +3,7 @@ export default {
   pages: {
     overview: "Overview",
     users: "Users (Client + tRPC)",
+    todolists: "Todolists (Client + tRPC)",
   },
   introduction: {
     title: "tRPC",
@@ -64,6 +65,20 @@ export default {
     },
     errorTitle: "Request failed",
     errorHint: "Check API configuration and that the id exists.",
+    errorDetailsLabel: "Details",
+  },
+  todolists: {
+    title: "Todolists (Client Component Demo)",
+    lead: "On load this page calls trpc.todolists.list.useQuery({}). Use it to smoke-test the list procedure and MOCK_USER_ID auth.",
+    loading: "Loading...",
+    resultTitle: "Response",
+    friendly: {
+      title: "List summary",
+      summary: "{total} items | {done} done | {pending} pending",
+    },
+    errorTitle: "Request failed",
+    errorHint:
+      "Check DATABASE_MAIN_URL and MOCK_USER_ID, then restart the dev server.",
     errorDetailsLabel: "Details",
   },
 };

@@ -132,6 +132,17 @@ export function Example({ userId }: { userId: string }) {
                 {t("trpc.users.lead")}
               </p>
             </li>
+            <li>
+              <Link
+                className="font-medium text-[#7cc0ff] text-lg transition-colors hover:text-[#a5d6ff]"
+                href="/trpc/todolists"
+              >
+                {t("trpc.pages.todolists")} →
+              </Link>
+              <p className="mt-1 text-slate-400 leading-7">
+                {t("trpc.todolists.lead")}
+              </p>
+            </li>
           </ul>
         </section>
       </article>

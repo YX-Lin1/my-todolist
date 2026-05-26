@@ -4,6 +4,7 @@ import error from "./error";
 import homepage from "./homepage";
 import seo from "./seo";
 import timezonesData, { regions } from "./timezones";
+import trpc from "./trpc";
 
 export default {
   homepage,
@@ -15,4 +16,5 @@ export default {
     ...timezonesData,
     regions,
   },
+  trpc,
 };

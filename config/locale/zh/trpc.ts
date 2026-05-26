@@ -3,6 +3,7 @@ export default {
   pages: {
     overview: "概述",
     users: "Users（客户端 + tRPC）",
+    todolists: "Todolists（客户端 + tRPC）",
     login: "Login（客户端 + tRPC）",
   },
   introduction: {
@@ -63,6 +64,20 @@ export default {
     },
     errorTitle: "请求失败",
     errorHint: "请检查 API 配置以及 id 是否存在。",
+    errorDetailsLabel: "详情",
+  },
+  todolists: {
+    title: "Todolists（客户端组件示例）",
+    lead: "进入页面即调用 trpc.todolists.list.useQuery({})。用于联调 list 接口与 MOCK_USER_ID 鉴权。",
+    loading: "请求中...",
+    resultTitle: "响应",
+    friendly: {
+      title: "列表摘要",
+      summary: "共 {total} 条 | 已完成 {done} 条 | 未完成 {pending} 条",
+    },
+    errorTitle: "请求失败",
+    errorHint:
+      "请检查 DATABASE_MAIN_URL、MOCK_USER_ID 是否已配置，并确认 dev 服务已重启。",
     errorDetailsLabel: "详情",
   },
 };
