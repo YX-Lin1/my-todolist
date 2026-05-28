@@ -2,7 +2,7 @@
 
 import { useI18n } from "@surgeteam/i18n/use-i18n";
 import { trpc } from "@/library/trpc/client";
-import { TrpcErrorPanel } from "@/library/trpc/trpc-error-panel";
+import { TrpcErrorPanel } from "@/app/components/trpc-error-panel";
 
 function jsonStringifyValue(value: unknown): string {
   return JSON.stringify(value, null, 2);
