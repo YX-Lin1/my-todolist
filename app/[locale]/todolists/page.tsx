@@ -1,36 +1,219 @@
 "use client";
 
+/**
+ * 待办产品页（最小实现）
+ * - 数据：trpc.todolists.*（鉴权由服务端 MOCK_USER_ID，无需 localStorage userId）
+ * - UI：保留旧 demo 布局；搜索仅前端过滤，不请求后端
+ */
+
+import { Button } from "@surgeteam/design-system/components/ui/button";
+import { Input } from "@surgeteam/design-system/components/ui/input";
 import { useI18n } from "@surgeteam/i18n/use-i18n";
+import { useMemo, useState } from "react";
+import { TrpcErrorPanel } from "@/app/components/trpc-error-panel";
 import { trpc } from "@/library/trpc/client";
-import { useEffect, useState } from "react";
-// 可选：Input、Button 等设计系统组件
+
+/** 与 list 接口返回的 data 数组元素一致（id 为 uuid 字符串） */
+type TodoItem = {
+  id: string;
+  todo: string;
+  completed: boolean;
+};
 
 export default function TodolistsPage() {
   const { t } = useI18n();
+  const utils = trpc.useUtils();
+
+  // 进页自动拉列表；用户身份在服务端 ctx.userId（.env MOCK_USER_ID）
   const listQuery = trpc.todolists.list.useQuery({});
 
-  if (listQuery.isLoading) {
-    return <p>{t("todolists.loading")}</p>;
-  }
-  if (listQuery.isError) {
-    // 阶段 2 未做时可简单显示 message
-    return <p>{listQuery.error.message}</p>;
-  }
+  const [inputValue, setInputValue] = useState("");
+  const [searchValue, setSearchValue] = useState("");
 
-  const items = listQuery.data?.data ?? [];
+  const createMutation = trpc.todolists.create.useMutation({
+    onSuccess: async () => {
+      await utils.todolists.list.invalidate();
+      setInputValue("");
+    },
+  });
+
+  const updateMutation = trpc.todolists.update.useMutation({
+    onSuccess: () => utils.todolists.list.invalidate(),
+  });
+
+  const deleteMutation = trpc.todolists.delete.useMutation({
+    onSuccess: () => utils.todolists.list.invalidate(),
+  });
+
+  // Service 返回 { data: TodoItem[] }
+  // 第一个data是接口返回的data，第二个data是后端TodolistsListResponseSchema约定的data
+  // ?? []：如果listQuery.data为空，则返回空数组
+  const items: TodoItem[] = listQuery.data?.data ?? [];
+
+  // 搜索：与旧 demo 相同，只过滤当前列表，不调接口
+  const filteredItems = useMemo(() => {
+    const keyword = searchValue.trim().toLowerCase();
+    if (!keyword) return items;
+    return items.filter((item) => item.todo.toLowerCase().includes(keyword));
+  }, [items, searchValue]);
+
+  const doneCount = items.filter((item) => item.completed).length;
+  const pendingCount = items.length - doneCount;
+
+  const isMutating =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
+
+  const handleAddTodo = () => {
+    const todo = inputValue.trim();
+    if (!todo) return;
+    createMutation.mutate({ data: { todo, completed: false } });
+  };
+
+  const handleToggleCompleted = (item: TodoItem) => {
+    updateMutation.mutate({
+      data: {
+        id: item.id,
+        todo: item.todo,
+        completed: !item.completed,
+      },
+    });
+  };
+
+  const handleDeleteTodo = (id: string) => {
+    deleteMutation.mutate({ data: { id } });
+  };
+
+  const errorLabels = {
+    title: t("todolists.errorTitle"),
+    hint: t("todolists.errorHint"),
+    detailsLabel: t("todolists.errorDetailsLabel"),
+  };
 
   return (
-    <div>
-      <h1>{t("todolists.title")}</h1>
-      {items.length === 0 ? (
-        <p>{t("todolists.empty")}</p>
-      ) : (
-        <ul>
-          {items.map((item) => (
-            <li key={item.id}>{item.todo}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <>
+      <div className="sticky top-0 z-100 flex items-center justify-between bg-gradient-to-br from-[#FFE100B5] to-[#FFBF5FAF] px-[30px] py-4 text-white shadow-md">
+        <h1 className="font-bold text-2xl">{t("todolists.title")}</h1>
+      </div>
+
+      <div className="relative rounded-[12px] bg-[#fff3e0] pt-[20px] pr-[20px] pb-[35px] pl-[20px]">
+        <p className="mb-[20px] font-bold text-[16px]">{t("todolists.listTitle")}</p>
+
+        {listQuery.isError ? (
+          <div className="mb-4">
+            <TrpcErrorPanel
+              error={listQuery.error}
+              labels={errorLabels}
+              t={t}
+            />
+          </div>
+        ) : null}
+
+        <div className="flex gap-[10px]">
+          <Input
+            className="mb-2 h-10 flex-1 rounded-md p-2 text-sm"
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder={t("todolists.searchPlaceholder")}
+            type="text"
+            value={searchValue}
+          />
+          {/* 搜索为实时过滤，按钮仅占位，与旧 demo 一致 */}
+          <Button
+            className="rounded bg-[#FFBB1E] px-4 py-2 text-base text-white hover:bg-[#e0a800]"
+            size="lg"
+            type="button"
+          >
+            {t("todolists.search")}
+          </Button>
+        </div>
+
+        <div className="flex gap-[10px]">
+          <Input
+            className="mb-2 h-10 flex-1 rounded-md p-2 text-sm"
+            disabled={isMutating || listQuery.isError}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAddTodo();
+            }}
+            placeholder={t("todolists.addPlaceholder")}
+            type="text"
+            value={inputValue}
+          />
+          <Button
+            className="rounded bg-[#39bd46ff] px-4 py-2 text-base text-white hover:bg-[#32a03c]"
+            disabled={isMutating || listQuery.isError}
+            onClick={handleAddTodo}
+            size="lg"
+            type="button"
+          >
+            {t("todolists.add")}
+          </Button>
+        </div>
+
+        {listQuery.isLoading ? (
+          <p className="my-[20px] text-center text-[#666] text-[16px]">
+            {t("todolists.loading")}
+          </p>
+        ) : null}
+
+        {!listQuery.isLoading && !listQuery.isError && items.length === 0 ? (
+          <p className="my-[20px] text-center text-[#666] text-[16px]">
+            {t("todolists.empty")}
+          </p>
+        ) : null}
+
+        {!listQuery.isLoading && !listQuery.isError && items.length > 0 ? (
+          <div>
+            {filteredItems.map((item) => (
+              <div
+                className={`mb-[10px] flex items-center justify-between p-[5px] ${
+                  item.completed ? "bg-[#f0f0f0]" : "bg-white"
+                }`}
+                key={item.id}
+              >
+                <input
+                  checked={item.completed}
+                  className="h-[20px] w-[20px] cursor-pointer"
+                  disabled={isMutating}
+                  onChange={() => handleToggleCompleted(item)}
+                  type="checkbox"
+                />
+                <span
+                  className={`text-base ${
+                    item.completed
+                      ? "text-[#666666] line-through"
+                      : "text-[#000000]"
+                  }`}
+                >
+                  {item.todo}
+                </span>
+                <Button
+                  className="rounded bg-[#f44336] px-4 py-2 text-base text-white hover:bg-[#e53935]"
+                  disabled={isMutating}
+                  onClick={() => handleDeleteTodo(item.id)}
+                  size="lg"
+                  type="button"
+                >
+                  {t("todolists.delete")}
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {!listQuery.isError ? (
+          <div className="absolute right-[20px] bottom-[5px] text-right text-[#666] text-[14px]">
+            <p>
+              {t("todolists.stats", {
+                total: String(items.length),
+                done: String(doneCount),
+                pending: String(pendingCount),
+              })}
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }
