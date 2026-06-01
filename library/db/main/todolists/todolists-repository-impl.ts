@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import type { MainDbClient } from "@/library/db/main/client";
 import { todoTable } from "@/library/db/main/drizzle/schema/main-schema/todolists-table";
 import type { TodoRepository } from "@/library/db/main/todolists/todolists-repository";
@@ -38,7 +38,8 @@ export class TodoRepositoryImpl implements TodoRepository {
       const rows = await this.db
         .select()
         .from(todoTable)
-        .where(eq(todoTable.user_id, request.user_id));
+        .where(eq(todoTable.user_id, request.user_id))
+        .orderBy(desc(todoTable.created_at));
       return rows;
     }
   
