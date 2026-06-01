@@ -53,9 +53,12 @@ export default function TodolistsPage() {
   // 搜索：与旧 demo 相同，只过滤当前列表，不调接口
   const filteredItems = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
+    // 如果搜索关键词为空，则返回所有列表
     if (!keyword) return items;
+    // 如果搜索关键词不为空，则过滤列表
     return items.filter((item) => item.todo.toLowerCase().includes(keyword));
   }, [items, searchValue]);
+  // 只有items或searchValue变化时，才重新计算filteredItems
 
   const doneCount = items.filter((item) => item.completed).length;
   const pendingCount = items.length - doneCount;
@@ -131,6 +134,7 @@ export default function TodolistsPage() {
         <div className="flex gap-[10px]">
           <Input
             className="mb-2 h-10 flex-1 rounded-md p-2 text-sm"
+            // 如果正在创建、更新或删除，或者有错误，则禁用输入框
             disabled={isMutating || listQuery.isError}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
