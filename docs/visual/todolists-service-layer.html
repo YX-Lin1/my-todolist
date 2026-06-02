@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todolists Service 层架构说明</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
+    --bg: #eef2f7;
+    --surface: #ffffff;
+    --surface2: #e8edf4;
+    --surface-elevated: #f4f8fc;
+    --border: rgba(15, 35, 65, 0.1);
+    --border-bright: rgba(15, 35, 65, 0.2);
+    --text: #0f1c2e;
+    --text-dim: #4a5f78;
+    --accent: #1e3a5f;
+    --accent-dim: rgba(30, 58, 95, 0.08);
+    --gold: #b8860b;
+    --gold-dim: rgba(184, 134, 11, 0.12);
+    --teal: #0f766e;
+    --teal-dim: rgba(15, 118, 110, 0.1);
+    --rose: #9f1239;
+    --rose-dim: rgba(159, 18, 57, 0.08);
+    --green: #166534;
+    --green-dim: rgba(22, 101, 52, 0.1);
+    --step: #0369a1;
+    --step-dim: rgba(3, 105, 161, 0.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c1219;
+      --surface: #141c28;
+      --surface2: #1a2433;
+      --surface-elevated: #1e2a3d;
+      --border: rgba(200, 220, 255, 0.08);
+      --border-bright: rgba(200, 220, 255, 0.16);
+      --text: #e2eaf4;
+      --text-dim: #8fa3bc;
+      --accent: #7eb8e8;
+      --accent-dim: rgba(126, 184, 232, 0.12);
+      --gold: #d4a73a;
+      --gold-dim: rgba(212, 167, 58, 0.14);
+      --teal: #5eead4;
+      --teal-dim: rgba(94, 234, 212, 0.1);
+      --rose: #fda4af;
+      --rose-dim: rgba(253, 164, 175, 0.1);
+      --green: #86efac;
+      --green-dim: rgba(134, 239, 172, 0.1);
+      --step: #38bdf8;
+      --step-dim: rgba(56, 189, 248, 0.12);
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(30, 58, 95, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 58, 95, 0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--text);
+    font-family: var(--body, var(--font-body));
+    font-family: var(--font-body);
+    padding: 32px 24px 64px;
+    min-height: 100vh;
+    line-height: 1.55;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate { animation: fadeUp 0.4s ease-out both; animation-delay: calc(var(--i, 0) * 0.05s); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  .hero {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+  }
+  .hero-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
+  .lead { font-size: 15px; color: var(--text-dim); max-width: 720px; }
+  .lead code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .kpi-num {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: var(--font-mono); }
+  .section { margin-bottom: 36px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+    background: var(--gold-dim);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  h2 { font-size: 20px; font-weight: 600; }
+  .section-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; max-width: 680px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-bright);
+    white-space: nowrap;
+  }
+  tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:nth-child(even) { background: rgba(0,0,0,0.02); }
+  @media (prefers-color-scheme: dark) {
+    tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  }
+  tbody tr:hover { background: var(--accent-dim); }
+  tbody tr:last-child td { border-bottom: none; }
+  td code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--step-dim);
+    color: var(--step);
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  td small { display: block; color: var(--text-dim); font-size: 11px; margin-top: 4px; }
+  .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .badge--contract { background: var(--gold-dim); color: var(--gold); }
+  .badge--impl { background: var(--teal-dim); color: var(--teal); }
+  .badge--map { background: var(--step-dim); color: var(--step); }
+  .badge--schema { background: var(--rose-dim); color: var(--rose); }
+  .file-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .ve-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    min-width: 0;
+  }
+  .ve-card--hero {
+    grid-column: 1 / -1;
+    background: var(--surface-elevated);
+    border-color: var(--border-bright);
+    border-left: 3px solid var(--gold);
+  }
+  .ve-card h3 {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .ve-card p { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+  .ve-card ul { font-size: 12px; color: var(--text-dim); padding-left: 18px; }
+  .ve-card li { margin-bottom: 4px; }
+  .ve-card li code { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+  pre.snip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+    margin-top: 8px;
+  }
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .pipe-step {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 16px;
+    position: relative;
+    padding-bottom: 20px;
+  }
+  .pipe-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 23px;
+    top: 40px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-bright);
+  }
+  .pipe-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    .pipe-num { color: var(--bg); }
+  }
+  .pipe-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    min-width: 0;
+  }
+  .pipe-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .pipe-body p { font-size: 13px; color: var(--text-dim); }
+  .pipe-body code { font-family: var(--font-mono); font-size: 11px; background: var(--accent-dim); color: var(--accent); padding: 1px 5px; border-radius: 3px; }
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 16px;
+  }
+  .callout strong { color: var(--text); }
+  .mermaid-wrap {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 16px;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    min-height: 320px;
+  }
+  .diagram-shell { position: relative; margin-bottom: 8px; }
+  .diagram-shell__hint {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .mermaid-viewport { position: relative; overflow: hidden; width: 100%; min-height: 280px; }
+  .mermaid-canvas { position: absolute; top: 0; left: 0; }
+  .zoom-controls {
+    position: absolute; top: 8px; right: 8px; z-index: 10;
+    display: flex; gap: 2px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: 2px;
+  }
+  .zoom-controls button {
+    width: 28px; height: 28px; border: none; background: transparent;
+    color: var(--text-dim); font-family: var(--font-mono); font-size: 14px;
+    cursor: pointer; border-radius: 4px;
+  }
+  .zoom-controls button:hover { background: var(--border); color: var(--text); }
+  .zoom-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); padding: 0 6px; }
+  .mermaid-wrap { cursor: grab; }
+  .mermaid-wrap.is-panning { cursor: grabbing; user-select: none; }
+  .mermaid .nodeLabel { font-family: var(--font-body) !important; font-size: 14px !important; }
+  .mermaid .edgeLabel { font-family: var(--font-mono) !important; font-size: 11px !important; }
+  .ext-list { font-size: 12px; color: var(--text-dim); }
+  .ext-list li { margin-bottom: 6px; word-break: break-all; }
+  .ext-list code { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+  @media (max-width: 768px) {
+    body { padding: 16px; }
+    h1 { font-size: 24px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .file-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero animate" style="--i:0">
+    <div class="hero-label">library/services/todolists</div>
+    <h1>Todolists Service 层说明</h1>
+    <p class="lead">
+      本目录是<strong>业务服务层</strong>：在 tRPC 与数据库 Repository 之间，负责入参校验、权限边界（<code>userId</code>）、调用仓储、以及出参映射。
+      对外契约由 Zod Schema 定义；实现类通过依赖注入获取 <code>TodoRepository</code>。
+    </p>
+  </header>
+
+  <div class="kpi-row animate" style="--i:1">
+    <div class="kpi"><div class="kpi-num">5</div><div class="kpi-label">本目录文件</div></div>
+    <div class="kpi"><div class="kpi-num">4</div><div class="kpi-label">API：list / create / update / delete</div></div>
+    <div class="kpi"><div class="kpi-num">2</div><div class="kpi-label">Schema 文件（入/出）</div></div>
+    <div class="kpi"><div class="kpi-num">3</div><div class="kpi-label">每层职责：契约 → 实现 → 映射</div></div>
+  </div>
+
+  <!-- Section 1: Stack -->
+  <section class="section animate" style="--i:2">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>全链路位置</h2>
+    </div>
+    <p class="section-desc">一次 <code>trpc.todolists.*</code> 调用从客户端到数据库的流向。Service 层不直接访问 Drizzle，只依赖 Repository 接口。</p>
+    <div class="diagram-shell">
+      <p class="diagram-shell__hint">Ctrl/Cmd + 滚轮缩放 · 拖拽平移 · 双击适应 · ⛶ 新窗口打开</p>
+      <div class="mermaid-wrap">
+        <div class="zoom-controls">
+          <button type="button" data-action="zoom-in" title="放大">+</button>
+          <button type="button" data-action="zoom-out" title="缩小">−</button>
+          <button type="button" data-action="zoom-fit" title="适应">↻</button>
+          <button type="button" data-action="zoom-one" title="1:1">1:1</button>
+          <button type="button" data-action="zoom-expand" title="展开">⛶</button>
+          <span class="zoom-label">…</span>
+        </div>
+        <div class="mermaid-viewport">
+          <div class="mermaid mermaid-canvas"></div>
+        </div>
+      </div>
+      <script type="text/plain" class="diagram-source">
+graph TD
+  UI["React 页面<br/>app/.../todolists/page.tsx"]
+  TRPC["tRPC Router<br/>library/trpc/routers/todolists"]
+  SVC["TodolistsServiceImpl<br/>library/services/todolists"]
+  REPO["TodoRepository<br/>library/db/main/todolists"]
+  DB[("PostgreSQL<br/>todolists 表")]
+  UI -->|"trpc.todolists.list.useQuery"| TRPC
+  UI -->|"create / update / delete mutation"| TRPC
+  TRPC -->|"getTodolistsService()<br/>+ ctx.userId"| SVC
+  SVC -->|"parseRequest (Zod)"| SVC
+  SVC -->|"findByUserId / create / update / delete"| REPO
+  REPO --> DB
+  SVC -->|"Mapper + parseResponse"| TRPC
+      </script>
+    </div>
+  </section>
+
+  <!-- Section 2: File table -->
+  <section class="section animate" style="--i:3">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>文件职责一览</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>文件</th>
+            <th>类型</th>
+            <th>职责</th>
+            <th>关键导出</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>todolists-request.schema.ts</code></td>
+            <td><span class="badge badge--schema">入参契约</span></td>
+            <td>用 Zod 描述客户端/ tRPC 传入的 request 形状；导出 <code>z.input</code> 类型供 TypeScript 与 tRPC <code>.input()</code> 使用。</td>
+            <td><code>TodolistsListRequestSchema</code> 等<small>list 为空对象 {}</small></td>
+          </tr>
+          <tr>
+            <td><code>todolists-response.schema.ts</code></td>
+            <td><span class="badge badge--schema">出参契约</span></td>
+            <td>定义 Service 返回给上层的 response；Mapper 用 <code>parseResponse</code> 做运行时校验。</td>
+            <td><code>TodolistsListResponseSchema</code> 等<small>list 不暴露 user_id</small></td>
+          </tr>
+          <tr>
+            <td><code>todolists-service.ts</code></td>
+            <td><span class="badge badge--contract">接口</span></td>
+            <td>纯 TypeScript 接口，声明四个方法签名；便于测试替换与 DI 注册，无实现逻辑。</td>
+            <td><code>interface TodolistsService</code></td>
+          </tr>
+          <tr>
+            <td><code>todolists-service-impl.ts</code></td>
+            <td><span class="badge badge--impl">实现</span></td>
+            <td>业务编排：校验 → 鉴权/归属 → 调 Repository → 调 Mapper；含 <code>assertTodoOwnedByUser</code> 私有方法。</td>
+            <td><code>class TodolistsServiceImpl</code></td>
+          </tr>
+          <tr>
+            <td><code>todolists-mapper.ts</code></td>
+            <td><span class="badge badge--map">映射</span></td>
+            <td>将 Repository 行数据转为 Service 对外结构，并经 Zod 校验；隔离 DB 字段与 API 字段差异。</td>
+            <td><code>todolistsListResponseMapper</code> 等</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section 3: File details -->
+  <section class="section animate" style="--i:4">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>各文件实现逻辑</h2>
+    </div>
+    <div class="file-grid">
+      <article class="ve-card ve-card--hero">
+        <h3>todolists-service-impl.ts — 核心流程</h3>
+        <p>每个公开方法遵循相同模式（list 略简，无 <code>data</code> 解构）：</p>
+        <pre class="snip">1. parseRequest(RequestSchema, request)   // 入参 Zod 校验
+2. 使用 ctx.userId（不信任客户端传的 userId）
+3. todoRepository.*(...)                // 持久化
+4. todolists*ResponseMapper(...)        // 出参映射 + parseResponse</pre>
+        <p style="margin-top:10px"><strong>update / delete</strong> 在写库前先 <code>assertTodoOwnedByUser</code>：按 id 查行，若不存在或 <code>user_id !== ctx.userId</code> 则抛统一「未找到」错误，避免信息泄露。</p>
+      </article>
+      <article class="ve-card">
+        <h3>todolists-request.schema.ts</h3>
+        <p>约定请求体统一包在 <code>{ data: ... }</code> 中（list 除外为空对象）。</p>
+        <ul>
+          <li><code>create</code>：<code>todo</code> 字符串 + <code>completed</code>（创建时 impl 强制 <code>false</code>）</li>
+          <li><code>update</code>：含 <code>id</code>（UUID）、<code>todo</code>、<code>completed</code></li>
+          <li><code>delete</code>：仅 <code>id</code></li>
+        </ul>
+      </article>
+      <article class="ve-card">
+        <h3>todolists-response.schema.ts</h3>
+        <p>对外响应同样 <code>{ data: ... }</code> 包装。</p>
+        <ul>
+          <li><code>list</code>：数组项仅 <code>id, todo, completed</code>（隐藏 user_id）</li>
+          <li><code>create</code>：含完整行含 <code>user_id</code>、时间戳</li>
+          <li><code>update</code>：无 user_id，有时间戳</li>
+          <li><code>delete</code>：仅返回被删 <code>id</code></li>
+        </ul>
+      </article>
+      <article class="ve-card">
+        <h3>todolists-mapper.ts</h3>
+        <p>Repository 类型为 <code>TodoCreateResponse</code>（表行）。<code>mapListRow</code> 裁剪字段；各 mapper 调用 <code>parseResponse(Schema, payload)</code>，校验失败抛 <code>INVALID_RESPONSE</code>。</p>
+      </article>
+      <article class="ve-card">
+        <h3>todolists-service.ts</h3>
+        <p>接口方法均接收 <code>(request, ctx: { userId: string })</code>。<code>userId</code> 由 tRPC <code>protectedProcedure</code> 从上下文注入，Service 永不从 request body 读取用户身份。</p>
+      </article>
+    </div>
+    <div class="callout">
+      <strong>DI 注册：</strong>
+      <code>library/services/registrations.ts</code> 将 <code>TodolistsServiceImpl</code> 包装在 <code>serviceErrorProxy</code> 中，并注入 <code>MainDbTokens.todoRepository</code>。
+    </div>
+  </section>
+
+  <!-- Section 4: Sequence -->
+  <section class="section animate" style="--i:5">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>以 update 为例的调用序列</h2>
+    </div>
+    <div class="diagram-shell">
+      <div class="mermaid-wrap">
+        <div class="zoom-controls">
+          <button type="button" data-action="zoom-in">+</button>
+          <button type="button" data-action="zoom-out">−</button>
+          <button type="button" data-action="zoom-fit">↻</button>
+          <button type="button" data-action="zoom-one">1:1</button>
+          <button type="button" data-action="zoom-expand">⛶</button>
+          <span class="zoom-label">…</span>
+        </div>
+        <div class="mermaid-viewport">
+          <div class="mermaid mermaid-canvas"></div>
+        </div>
+      </div>
+      <script type="text/plain" class="diagram-source">
+sequenceDiagram
+  participant C as Client
+  participant R as todolistsRouter
+  participant S as TodolistsServiceImpl
+  participant M as Mapper
+  participant DB as TodoRepository
+  C->>R: update({ data: { id, todo, completed } })
+  R->>S: update(input, { userId })
+  S->>S: parseRequest(UpdateRequestSchema)
+  S->>DB: get({ id })
+  alt 不存在或非本人
+    S-->>C: ServiceError USER_NOT_FOUND
+  end
+  S->>DB: update({ id, data: { todo, completed } })
+  DB-->>S: row
+  S->>M: todolistsUpdateResponseMapper(row)
+  M->>M: parseResponse(UpdateResponseSchema)
+  M-->>S: TodolistsUpdateResponse
+  S-->>R: response
+  R-->>C: JSON
+      </script>
+    </div>
+  </section>
+
+  <!-- Section 5: How to add features -->
+  <section class="section animate" style="--i:6">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>新增功能推荐编写顺序</h2>
+    </div>
+    <p class="section-desc">以本项目的分层为准：自内向外先稳定数据与契约，再暴露 API。下表以「新增 toggleComplete 或批量删除」类需求为例。</p>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-num">1</div>
+        <div class="pipe-body">
+          <h4>数据库 / Repository（若需要新查询）</h4>
+          <p>在 <code>library/db/main/todolists/</code> 扩展 <code>TodoRepository</code> 接口与 <code>TodoRepositoryImpl</code>，必要时改 Drizzle schema。Service 只依赖接口，不直接写 SQL。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">2</div>
+        <div class="pipe-body">
+          <h4>todolists-request.schema.ts</h4>
+          <p>新增 <code>*RequestSchema</code> 与 <code>z.input</code> 类型；保持 <code>{ data: ... }</code> 包装约定（与现有 create/update 一致）。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">3</div>
+        <div class="pipe-body">
+          <h4>todolists-response.schema.ts</h4>
+          <p>定义返回结构；思考 list 与 detail 是否暴露不同字段（参考 list 隐藏 user_id 的做法）。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">4</div>
+        <div class="pipe-body">
+          <h4>todolists-service.ts</h4>
+          <p>在接口上声明新方法签名，带上 <code>ctx: { userId: string }</code>。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">5</div>
+        <div class="pipe-body">
+          <h4>todolists-mapper.ts</h4>
+          <p>新增 <code>todolists*ResponseMapper</code>，Repository 行 → 对外 DTO，末尾 <code>parseResponse</code>。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">6</div>
+        <div class="pipe-body">
+          <h4>todolists-service-impl.ts</h4>
+          <p>实现方法：<code>parseRequest</code> → 权限/归属检查（可复用 <code>assertTodoOwnedByUser</code>）→ Repository → Mapper。写操作务必用 <code>ctx.userId</code> 过滤或校验。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">7</div>
+        <div class="pipe-body">
+          <h4>tRPC Router + 前端</h4>
+          <p><code>library/trpc/routers/todolists/todolists-router.ts</code> 增加 procedure；页面调用 <code>trpc.todolists.*</code>。无需改 <code>registrations.ts</code>，除非新建了另一个 Service 类。</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">8</div>
+        <div class="pipe-body">
+          <h4>国际化与 SEO（可选）</h4>
+          <p><code>config/locale/*/todolists.ts</code>、页面文案等。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: Related -->
+  <section class="section animate" style="--i:7">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>目录外相关文件</h2>
+    </div>
+    <ul class="ext-list">
+      <li><code>library/trpc/routers/todolists/todolists-router.ts</code> — tRPC 入口，<code>protectedProcedure</code> + <code>z.custom&lt;Request&gt;()</code></li>
+      <li><code>library/services/registrations.ts</code> — <code>TodolistsService</code> 依赖注入</li>
+      <li><code>library/db/main/todolists/*</code> — Repository 与 Drizzle 实现</li>
+      <li><code>library/services/common/parse.ts</code> — <code>parseRequest</code> / <code>parseResponse</code></li>
+      <li><code>app/[locale]/todolists/page.tsx</code> — 客户端 CRUD 与 cache invalidation</li>
+    </ul>
+  </section>
+
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  import elkLayouts from 'https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk/dist/mermaid-layout-elk.esm.min.mjs';
+
+  const config = {
+    fitPadding: 28, minHeight: 280, maxHeightPx: 720, maxHeightVh: 0.75,
+    maxInitialZoom: 1.6, minZoom: 0.08, maxZoom: 5, zoomStep: 0.14, readabilityFloor: 0.55
+  };
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+  let activeDrag = null;
+  addEventListener('mousemove', (e) => activeDrag?.onMove(e));
+  addEventListener('mouseup', () => { activeDrag?.onEnd(); activeDrag = null; });
+
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.registerLayoutLoaders(elkLayouts);
+  mermaid.initialize({
+    startOnLoad: false, theme: 'base', look: 'classic', layout: 'elk',
+    themeVariables: {
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      fontSize: '15px',
+      primaryColor: isDark ? '#1e3a5f' : '#dbeafe',
+      primaryBorderColor: isDark ? '#7eb8e8' : '#1e3a5f',
+      primaryTextColor: isDark ? '#e2eaf4' : '#0f1c2e',
+      secondaryColor: isDark ? '#0f766e' : '#ccfbf1',
+      secondaryBorderColor: isDark ? '#5eead4' : '#0f766e',
+      secondaryTextColor: isDark ? '#e2eaf4' : '#0f1c2e',
+      tertiaryColor: isDark ? '#3d2e0a' : '#fef9c3',
+      tertiaryBorderColor: isDark ? '#d4a73a' : '#b8860b',
+      lineColor: isDark ? '#8fa3bc' : '#4a5f78',
+    }
+  });
+
+  function initDiagram(shell) {
+    const wrap = shell.querySelector('.mermaid-wrap');
+    const viewport = shell.querySelector('.mermaid-viewport');
+    const canvas = shell.querySelector('.mermaid-canvas');
+    const source = shell.querySelector('.diagram-source');
+    const label = shell.querySelector('.zoom-label');
+    if (!wrap || !viewport || !canvas || !source || !label) return;
+
+    let zoom = 1, fitMode = 'contain', panX = 0, panY = 0, svgW = 0, svgH = 0;
+    let sx = 0, sy = 0, spx = 0, spy = 0, touchDist = 0, touchCx = 0, touchCy = 0;
+
+    function constrainPan() {
+      const vpW = viewport.clientWidth, vpH = viewport.clientHeight;
+      const rW = svgW * zoom, rH = svgH * zoom, pad = config.fitPadding;
+      panX = (rW + pad * 2 <= vpW) ? (vpW - rW) / 2 : clamp(panX, vpW - rW - pad, pad);
+      panY = (rH + pad * 2 <= vpH) ? (vpH - rH) / 2 : clamp(panY, vpH - rH - pad, pad);
+    }
+    function applyTransform() {
+      const svg = canvas.querySelector('svg');
+      if (!svg || !svgW) return;
+      constrainPan();
+      svg.style.width = (svgW * zoom) + 'px';
+      svg.style.height = (svgH * zoom) + 'px';
+      canvas.style.transform = `translate(${panX}px, ${panY}px)`;
+      label.textContent = Math.round(zoom * 100) + '%';
+    }
+    function canPan() {
+      return svgW * zoom + config.fitPadding * 2 > viewport.clientWidth
+          || svgH * zoom + config.fitPadding * 2 > viewport.clientHeight;
+    }
+    function computeSmartFit() {
+      const aW = Math.max(80, viewport.clientWidth - config.fitPadding * 2);
+      const aH = Math.max(80, viewport.clientHeight - config.fitPadding * 2);
+      const contain = Math.min(aW / svgW, aH / svgH);
+      let z = contain, mode = 'contain';
+      if (contain < config.readabilityFloor) {
+        z = (svgH / svgW >= viewport.clientHeight / Math.max(viewport.clientWidth, 1))
+          ? aW / svgW : aH / svgH;
+        mode = 'priority';
+      }
+      return { zoom: clamp(z, config.minZoom, config.maxInitialZoom), mode };
+    }
+    function fitDiagram() {
+      if (!svgW) return;
+      const fit = computeSmartFit();
+      zoom = fit.zoom; fitMode = fit.mode;
+      panX = (viewport.clientWidth - svgW * zoom) / 2;
+      panY = (viewport.clientHeight - svgH * zoom) / 2;
+      applyTransform();
+    }
+    function setOneToOne() {
+      zoom = clamp(1, config.minZoom, config.maxZoom);
+      panX = (viewport.clientWidth - svgW) / 2;
+      panY = (viewport.clientHeight - svgH) / 2;
+      applyTransform();
+    }
+    function zoomAround(factor, cx, cy) {
+      const next = clamp(zoom * factor, config.minZoom, config.maxZoom);
+      const ratio = next / zoom;
+      panX = cx - ratio * (cx - panX);
+      panY = cy - ratio * (cy - panY);
+      zoom = next;
+      applyTransform();
+    }
+    function readSvgNaturalSize(svg) {
+      let w = svg.viewBox?.baseVal?.width || parseFloat(svg.getAttribute('width')) || 0;
+      let h = svg.viewBox?.baseVal?.height || parseFloat(svg.getAttribute('height')) || 0;
+      if (!w) { const b = svg.getBBox(); w = b.width; h = b.height; }
+      if (!svg.getAttribute('viewBox')) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      return { w, h };
+    }
+    function setAdaptiveHeight() {
+      if (!svgW) return;
+      const usableW = Math.max(280, wrap.getBoundingClientRect().width - 2);
+      const idealH = (svgH / svgW) * usableW + config.fitPadding * 2;
+      wrap.style.height = Math.round(clamp(idealH, config.minHeight, 520)) + 'px';
+    }
+    function openInNewTab() {
+      const svg = canvas.querySelector('svg');
+      if (!svg) return;
+      const clone = svg.cloneNode(true);
+      const bg = isDark ? '#0c1219' : '#eef2f7';
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagram</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:${bg};padding:40px}svg{max-width:100%;max-height:90vh}</style></head><body>${clone.outerHTML}</body></html>`;
+      open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
+    }
+    async function render() {
+      try {
+        const { svg } = await mermaid.render('d-' + Date.now() + Math.random().toString(36).slice(2), source.textContent.trim());
+        canvas.innerHTML = svg;
+        const svgNode = canvas.querySelector('svg');
+        const size = readSvgNaturalSize(svgNode);
+        svgW = size.w; svgH = size.h;
+        svgNode.removeAttribute('width'); svgNode.removeAttribute('height');
+        setAdaptiveHeight(); fitDiagram();
+      } catch (err) {
+        label.textContent = 'Error: ' + (err.message || 'render failed');
+      }
+    }
+    const actions = {
+      'zoom-in': () => zoomAround(1 + config.zoomStep, viewport.clientWidth / 2, viewport.clientHeight / 2),
+      'zoom-out': () => zoomAround(1 / (1 + config.zoomStep), viewport.clientWidth / 2, viewport.clientHeight / 2),
+      'zoom-fit': fitDiagram, 'zoom-one': setOneToOne, 'zoom-expand': openInNewTab
+    };
+    Object.entries(actions).forEach(([a, h]) => wrap.querySelector(`[data-action="${a}"]`)?.addEventListener('click', h));
+    viewport.addEventListener('dblclick', fitDiagram);
+    viewport.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const r = viewport.getBoundingClientRect();
+        zoomAround(e.deltaY < 0 ? 1 + config.zoomStep : 1 / (1 + config.zoomStep), e.clientX - r.left, e.clientY - r.top);
+      } else if (canPan()) { e.preventDefault(); panX -= e.deltaX; panY -= e.deltaY; applyTransform(); }
+    }, { passive: false });
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.zoom-controls') || !canPan()) return;
+      wrap.classList.add('is-panning');
+      sx = e.clientX; sy = e.clientY; spx = panX; spy = panY;
+      e.preventDefault();
+      activeDrag = {
+        onMove: (ev) => { panX = spx + (ev.clientX - sx); panY = spy + (ev.clientY - sy); applyTransform(); },
+        onEnd: () => wrap.classList.remove('is-panning')
+      };
+    });
+    new ResizeObserver(() => { if (svgW) { setAdaptiveHeight(); fitDiagram(); } }).observe(wrap);
+    render();
+  }
+  document.querySelectorAll('.diagram-shell').forEach(initDiagram);
+</script>
+</body>
+</html>
