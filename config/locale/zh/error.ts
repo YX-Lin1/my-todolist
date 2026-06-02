@@ -15,5 +15,6 @@ export default {
     INVALID_RESPONSE: "响应无效。",
     INTERNAL_ERROR: "服务器内部错误。",
     USER_NOT_FOUND: "未找到用户。",
+    LOGIN_FAILED: "登录失败。",
   },
 };

@@ -15,6 +15,7 @@ export class LoginServiceImpl implements LoginService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async login(request: LoginPostRequest): Promise<LoginPostResponse> {
+    // parseRequest检查前端传入的请求是否符合schema
     const { data: { account, password } } = parseRequest(
       LoginPostRequestSchema,
       request

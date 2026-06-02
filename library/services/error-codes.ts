@@ -5,6 +5,7 @@ export const ServiceErrorCodes = {
   INVALID_REQUEST: "INVALID_REQUEST",
   INVALID_RESPONSE: "INVALID_RESPONSE",
   INTERNAL_ERROR: "INTERNAL_ERROR",
+  LOGIN_FAILED: "LOGIN_FAILED",
 } as const;
 
 export type ServiceErrorCodes = keyof typeof ServiceErrorCodes;
