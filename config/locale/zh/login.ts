@@ -1,0 +1,16 @@
+export default {
+  welcomeBack: "Welcome Back",
+  title: "待办事项管理系统",
+  account: "账号",
+  password: "密码",
+  accountPlaceholder: "请输入账号",
+  passwordPlaceholder: "请输入密码",
+  submit: "登录",
+  submitting: "登录中...",
+  validationEmpty: "请输入账号和密码",
+  noAccount: "还没有账号？",
+  goRegister: "去注册",
+  errorTitle: "登录失败",
+  errorHint: "请检查账号、密码或数据库配置。",
+  errorDetailsLabel: "详情",
+};
