@@ -53,11 +53,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full">
+    <>
       {validationError ? (
         <p className="mb-2 text-red-600 text-sm">{validationError}</p>
       ) : null}
-  
+
       {loginMutation.isError ? (
         <div className="mb-4">
           <TrpcErrorPanel
@@ -70,13 +70,13 @@ export default function LoginPage() {
           />
         </div>
       ) : null}
-  
+
       <div className="mb-5">
         <span className="mb-2 block font-bold text-black text-sm">
           {t("login.account")}
         </span>
         <Input
-          className="h-10 w-full rounded-md p-2 text-sm"
+          className="h-10 w-full rounded-md bg-white p-2 text-sm"
           disabled={loginMutation.isPending}
           placeholder={t("login.accountPlaceholder")}
           type="text"
@@ -84,13 +84,13 @@ export default function LoginPage() {
           onChange={(e) => setAccount(e.target.value)}
         />
       </div>
-  
+
       <div className="mb-5">
         <span className="mb-2 block font-bold text-black text-sm">
           {t("login.password")}
         </span>
         <Input
-          className="h-10 w-full rounded-md p-2 text-sm"
+          className="h-10 w-full rounded-md bg-white p-2 text-sm"
           disabled={loginMutation.isPending}
           placeholder={t("login.passwordPlaceholder")}
           type="password"
@@ -99,7 +99,7 @@ export default function LoginPage() {
           onKeyDown={(e) => e.key === "Enter" && handleLogin()}
         />
       </div>
-  
+
       <Button
         className="w-full rounded bg-[#39bd46ff] px-4 py-2 text-base text-white hover:bg-[#32a03c]"
         disabled={loginMutation.isPending}
@@ -109,13 +109,13 @@ export default function LoginPage() {
       >
         {loginMutation.isPending ? t("login.submitting") : t("login.submit")}
       </Button>
-  
-      <p className="mt-[10px] text-[#5555553d] text-[14px]">
-        {t("login.noAccount")}
-        <Link className="ml-1 underline text-black/70" href="/">
+
+      <div className="mt-[10px] flex items-center justify-between text-[14px]">
+        <span className="text-black/50">{t("login.noAccount")}</span>
+        <Link className="underline text-black/70" href="/">
           {t("login.goRegister")}
         </Link>
-      </p>
-    </div>
+      </div>
+    </>
   ); 
 }
