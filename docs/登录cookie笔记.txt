@@ -1,0 +1,4 @@
+1.当在前端调用trpc.login.login.useMutation时，走的是login的trpc，实际业务走的是@my-todolist/library/services/login/login-service-impl.ts 。
+2.login会在services层实现校验密码账号、生成随机token，并将对应数据写入sessions表中。
+3.前端调用fetch("/api/auth/session"）时，会通过@my-todolist/app/api/auth/session/route.ts 将token存到浏览器的cookie中。
+4.当todolists前端调用trpc.todolists.list.useQuery，服务端 context + checkToken 验会话
