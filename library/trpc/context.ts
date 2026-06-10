@@ -1,60 +1,48 @@
+// 读取浏览器 Cookie 中的 token，并设置到 tRPC 的 context 中
 import { createAppContainer } from "@/library/di/container";
 
-const COOKIE_NAME = "sg_user_id";
+const SESSION_COOKIE_NAME = "MY-TOKEN";
 
-function readCookieUserId(req?: Request): string | undefined {
+function readCookieToken(req?: Request): string | undefined {
   if (!req) return undefined;
 
   const cookieHeader = req.headers.get("cookie");
   if (!cookieHeader) return undefined;
 
   const parts = cookieHeader.split(";").map((v) => v.trim());
-  const found = parts.find((v) => v.startsWith(`${COOKIE_NAME}=`));
+  const found = parts.find((v) => v.startsWith(`${SESSION_COOKIE_NAME}=`));
   if (!found) return undefined;
 
-  const value = decodeURIComponent(found.slice(`${COOKIE_NAME}=`.length)).trim();
+  const value = decodeURIComponent(found.slice(`${SESSION_COOKIE_NAME}=`.length)).trim();
   return value || undefined;
 }
 
-function readMockUserId(): string | undefined {
-  const id = process.env.MOCK_USER_ID?.trim();
-  return id && id.length > 0 ? id : undefined;
+async function resolveUserId(
+  req: Request | undefined,
+  // container的类型是 createAppContainer 返回的类型
+  container: ReturnType<typeof createAppContainer>,
+): Promise<string | undefined> {
+  const token = readCookieToken(req);
+  if (!token) return undefined; // 没有 Cookie → 未登录
+
+  try {
+    const loginService = container.services.getLoginService();
+    const { userId } = await loginService.checkToken({ data: { token } });
+    return userId;
+  } catch {
+    return undefined; // token 无效或过期 → 视为未登录
+  }
 }
 
-function resolveUserId(req?: Request): string | undefined {
-  // 1) 优先真实登录 Cookie
-  const fromCookie = readCookieUserId(req);
-  if (fromCookie) return fromCookie;
-
-  // 2) 本地开发兜底（生产可移除）
-  return readMockUserId();
-}
-
-export function createTRPCContext(opts?: { req?: Request }) {
+// 上下文
+export async function createTRPCContext(opts?: { req?: Request }) {
   const container = createAppContainer();
 
   return {
     signal: opts?.req?.signal,
     container,
-    userId: resolveUserId(opts?.req),
+    userId: await resolveUserId(opts?.req, container),
   };
 }
 
-export type Context = ReturnType<typeof createTRPCContext>;
-
-
-
-// import { createAppContainer } from "@/library/di/container";
-
-/**
- * Creates context for tRPC requests. Container is request-scoped for testability.
- */
-// export function createTRPCContext(opts?: { req?: Request }) {
-//   const container = createAppContainer();
-//   return {
-//     signal: opts?.req?.signal,
-//     container,
-//   };
-// }
-
-// export type Context = ReturnType<typeof createTRPCContext>;
+export type Context = Awaited<ReturnType<typeof createTRPCContext>>;

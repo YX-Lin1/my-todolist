@@ -1,3 +1,4 @@
+//  接收前端每次调用 trpc.xxx.xxx（查待办、改数据等）的请求，处理后返回响应
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { createTRPCContext } from "@/library/trpc/context";
 import { appRouter } from "@/library/trpc/routers";

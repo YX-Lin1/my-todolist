@@ -1,33 +1,31 @@
+// 登录成功后，把 token 写进浏览器 Cookie；退出登录时清掉 Cookie
 import { NextResponse } from "next/server";
 
 type SessionBody = {
-  userId?: string;
+  token?: string;
 };
 
-// 生产环境建议统一用 env 控制
 const isProd = process.env.NODE_ENV === "production";
-const COOKIE_NAME = "sg_user_id";
+const SESSION_COOKIE_NAME = "MY-TOKEN";
+const SESSION_COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
 
 export async function POST(req: Request) {
   // 获取请求体
   const body = (await req.json()) as SessionBody;
-  // 获取用户ID
-  const userId = body.userId?.trim();
-
-  // 如果用户ID不存在，返回400状态码
-  if (!userId) {
-    return NextResponse.json({ message: "userId required" }, { status: 400 });
+  // 获取token
+  const token = body.token?.trim();
+  if (!token) {
+    return NextResponse.json({ message: "token required" }, { status: 400 });
   }
 
-  // 创建响应对象
-  const res = NextResponse.json({ ok: true });
-
   // 设置cookie
-  res.cookies.set(COOKIE_NAME, userId, {
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: isProd,
-    path: "/",
+    path: "/", 
+    maxAge: SESSION_COOKIE_MAX_AGE,
   });
 
   return res;
@@ -36,7 +34,7 @@ export async function POST(req: Request) {
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
 
-  res.cookies.set(COOKIE_NAME, "", {
+  res.cookies.set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
     secure: isProd,
