@@ -9,9 +9,11 @@
 import { Button } from "@surgeteam/design-system/components/ui/button";
 import { Input } from "@surgeteam/design-system/components/ui/input";
 import { useI18n } from "@surgeteam/i18n/use-i18n";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrpcErrorPanel } from "@/app/components/trpc-error-panel";
 import { trpc } from "@/library/trpc/client";
+import { useRouter } from "@surgeteam/i18n/navigation";
+import { isTRPCClientError } from "@trpc/client";
 
 /** 与 list 接口返回的 data 数组元素一致（id 为 uuid 字符串） */
 type TodoItem = {
@@ -23,9 +25,18 @@ type TodoItem = {
 export default function TodolistsPage() {
   const { t } = useI18n();
   const utils = trpc.useUtils();
+  const router = useRouter();
 
-  // 进页自动拉列表；用户身份在服务端 ctx.userId（.env MOCK_USER_ID）
+  // 进页自动拉列表；用户身份在服务端 ctx.userId
   const listQuery = trpc.todolists.list.useQuery({});
+  useEffect(() => {
+    if(
+      isTRPCClientError(listQuery.error) &&
+      listQuery.error.shape?.code === "UNAUTHORIZED"
+    ){
+      router.push("/login");
+    }
+  }, [listQuery.error, router]);
 
   const [inputValue, setInputValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
@@ -94,10 +105,20 @@ export default function TodolistsPage() {
     detailsLabel: t("todolists.errorDetailsLabel"),
   };
 
+  const handleLogout = async () => {
+    await fetch("/api/auth/session", {
+      method: "DELETE",
+    });
+    localStorage.removeItem("loginAccount");
+    router.push("/login");
+  }
+
   return (
     <>
       <div className="sticky top-0 z-100 flex items-center justify-between bg-gradient-to-br from-[#FFE100B5] to-[#FFBF5FAF] px-[30px] py-4 text-white shadow-md">
         <h1 className="font-bold text-2xl">{t("todolists.title")}</h1>
+        <Button className="bg-white/20 border border-white/30 text-white px-[17px] py-[8px] rounded-6 cursor-pointer text-base font-medium transition-all duration-300 hover:bg-white/50"
+         onClick={handleLogout}>{t("todolists.logout")}</Button>
       </div>
 
       <div className="relative rounded-[12px] bg-[#fff3e0] pt-[20px] pr-[20px] pb-[35px] pl-[20px]">

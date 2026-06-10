@@ -13,4 +13,5 @@ export default {
   errorTitle: "操作失败",
   errorHint: "请检查 DATABASE_MAIN_URL、MOCK_USER_ID 是否已配置，并重启 dev 服务。",
   errorDetailsLabel: "详情",
+  logout: "登出",
 };
