@@ -1,5 +1,5 @@
 export default {
-  welcomeBack: "Welcome Back",
+  welcomeBack: "欢迎回来",
   title: "待办事项管理系统",
   account: "账号",
   password: "密码",

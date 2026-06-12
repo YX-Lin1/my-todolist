@@ -1,0 +1,16 @@
+export default {
+  welcomeBack: "ようこそ",
+  title: "リスト管理システム",
+  account: "アカウント",
+  password: "パスワード",
+  accountPlaceholder: "アカウントを入力してください",
+  passwordPlaceholder: "パスワードを入力してください",
+  submit: "ログイン",
+  submitting: "ログイン中…",
+  validationEmpty: "アカウントとパスワードを入力してください",
+  noAccount: "アカウントがないですか？",
+  goRegister: "登録する",
+  errorTitle: "ログイン失敗",
+  errorHint: "アカウント、パスワードまたはデータベース設定を確認してください。",
+  errorDetailsLabel: "詳細",
+};

@@ -1,0 +1,16 @@
+export default {
+  welcomeBack: "Welcome Back",
+  title: "Todo List Management System",
+  account: "Account",
+  password: "Password",
+  accountPlaceholder: "Enter your account",
+  passwordPlaceholder: "Enter your password",
+  submit: "Login",
+  submitting: "Logging in...",
+  validationEmpty: "Enter your account and password",
+  noAccount: "Don't have an account?",
+  goRegister: "Go to register",
+  errorTitle: "Login failed",
+  errorHint: "Please check your account, password or database configuration.",
+  errorDetailsLabel: "Details",
+};
