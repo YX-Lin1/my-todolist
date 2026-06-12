@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { getI18n } from "@surgeteam/i18n/get-i18n";
 
-export default async function LoginLayout({
+export default async function LoginShell({
   children,
 }: {
   children: ReactNode;

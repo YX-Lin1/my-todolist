@@ -40,7 +40,7 @@ export default async function RootLayout({
   return (
     <html data-scroll-behavior="smooth" lang={locale} suppressHydrationWarning>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
-        <DesignSystemProvider forcedTheme="dark" nonce={nonce ?? undefined}>
+        <DesignSystemProvider forcedTheme="light" nonce={nonce ?? undefined}>
           <I18nProvider>
             <AnalyticsProvider
               customOptions={{ googleAnalytics: { nonce: nonce ?? undefined } }}

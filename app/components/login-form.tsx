@@ -8,7 +8,7 @@ import { TrpcErrorPanel } from "@/app/components/trpc-error-panel";
 import { trpc } from "@/library/trpc/client";
 import { Link, useRouter } from "@surgeteam/i18n/navigation";
 
-export default function LoginPage() {
+export default function LoginForm() {
   const {t} = useI18n();
   const router = useRouter();
 

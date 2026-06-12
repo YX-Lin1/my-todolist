@@ -34,7 +34,7 @@ export default function TodolistsPage() {
       isTRPCClientError(listQuery.error) &&
       listQuery.error.shape?.code === "UNAUTHORIZED"
     ){
-      router.push("/login");
+      router.push("/");
     }
   }, [listQuery.error, router]);
 
@@ -58,7 +58,7 @@ export default function TodolistsPage() {
 
   const logoutMutation = trpc.login.logout.useMutation({
     onSuccess: () => {
-      router.push("/login");
+      router.push("/");
     },
   });
 
