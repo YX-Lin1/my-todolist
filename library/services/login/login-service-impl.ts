@@ -43,7 +43,7 @@ export class LoginServiceImpl implements LoginService {
       );
     }
     const token = randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
     await this.sessionsRepository.create({
       data: {
         id: randomUUID(),
@@ -62,8 +62,9 @@ export class LoginServiceImpl implements LoginService {
       request
     );
 
-    const row = await this.sessionsRepository.delete({ token });
-    return logoutPostResponseMapper(row);
+    // const row = await this.sessionsRepository.delete({ token });
+    // return logoutPostResponseMapper(row);
+    return { success: true };
   }
 
   async checkToken(request: CheckTokenPostRequest): Promise<CheckTokenPostResponse> {

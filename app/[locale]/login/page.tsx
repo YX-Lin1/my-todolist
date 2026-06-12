@@ -19,15 +19,6 @@ export default function LoginPage() {
   const loginMutation = trpc.login.login.useMutation({
     onSuccess: async (result) => {
       localStorage.setItem("loginAccount", result.user.account);
-
-      const response = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: result.token }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to login");
-      }
       router.push("/todolists"); 
     },
   });

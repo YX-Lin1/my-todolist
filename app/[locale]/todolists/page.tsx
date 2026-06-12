@@ -56,6 +56,12 @@ export default function TodolistsPage() {
     onSuccess: () => utils.todolists.list.invalidate(),
   });
 
+  const logoutMutation = trpc.login.logout.useMutation({
+    onSuccess: () => {
+      router.push("/login");
+    },
+  });
+
   // Service 返回 { data: TodoItem[] }
   // 第一个data是接口返回的data，第二个data是后端TodolistsListResponseSchema约定的data
   // ?? []：如果listQuery.data为空，则返回空数组
@@ -106,11 +112,7 @@ export default function TodolistsPage() {
   };
 
   const handleLogout = async () => {
-    await fetch("/api/auth/session", {
-      method: "DELETE",
-    });
-    localStorage.removeItem("loginAccount");
-    router.push("/login");
+    logoutMutation.mutate();
   }
 
   return (
