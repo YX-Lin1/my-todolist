@@ -1,8 +1,5 @@
 import { defineResources } from "@surgeteam/di/define-resources";
 import type { ContainerFromMap, ResolverShape } from "@surgeteam/di/types";
-import { MainApiTokens } from "@/library/api/main/registrations";
-import type { UsersService } from "@/library/services/users/users-service";
-import { UsersServiceImpl } from "@/library/services/users/users-service-impl";
 import { serviceErrorProxy } from "./error";
 
 import { LoginServiceImpl } from "./login/login-service-impl";
@@ -10,14 +7,10 @@ import type { LoginService } from "./login/login-service";
 import { MainDbTokens } from "../db/main/registrations";
 import type { TodolistsService } from "./todolists/todolists-service";
 import { TodolistsServiceImpl } from "./todolists/todolists-service-impl";
-import type { SessionsRepository } from "@/library/db/main/sessions/sessions-repository";
-import { SessionsRepositoryImpl } from "@/library/db/main/sessions/sessions-repository-impl";
+import { RegisterServiceImpl } from "./register/register-service-impl";
+import type { RegisterService } from "./register/register-service";
 
 const servicesMap = {
-  UsersService: (resolver: ResolverShape): UsersService =>
-    serviceErrorProxy(
-      new UsersServiceImpl(resolver.get(MainApiTokens.usersApi))
-    ),
   LoginService: (resolver: ResolverShape): LoginService =>
     serviceErrorProxy(
       new LoginServiceImpl(
@@ -26,6 +19,10 @@ const servicesMap = {
   TodolistsService: (resolver: ResolverShape): TodolistsService =>
     serviceErrorProxy(
       new TodolistsServiceImpl(resolver.get(MainDbTokens.todoRepository))
+    ),
+  RegisterService: (resolver: ResolverShape): RegisterService =>
+    serviceErrorProxy(
+      new RegisterServiceImpl(resolver.get(MainDbTokens.usersRepository))
     ),
 };
 
