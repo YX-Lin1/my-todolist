@@ -1,19 +1,12 @@
 "use client";
 
-/**
- * 待办产品页（最小实现）
- * - 数据：trpc.todolists.*（鉴权由服务端 MOCK_USER_ID，无需 localStorage userId）
- * - UI：保留旧 demo 布局；搜索仅前端过滤，不请求后端
- */
-
 import { Button } from "@surgeteam/design-system/components/ui/button";
 import { Input } from "@surgeteam/design-system/components/ui/input";
 import { useI18n } from "@surgeteam/i18n/use-i18n";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { TrpcErrorPanel } from "@/app/components/trpc-error-panel";
 import { trpc } from "@/library/trpc/client";
 import { useRouter } from "@surgeteam/i18n/navigation";
-import { isTRPCClientError } from "@trpc/client";
 
 /** 与 list 接口返回的 data 数组元素一致（id 为 uuid 字符串） */
 type TodoItem = {
@@ -29,14 +22,6 @@ export default function TodolistsPage() {
 
   // 进页自动拉列表；用户身份在服务端 ctx.userId
   const listQuery = trpc.todolists.list.useQuery({});
-  useEffect(() => {
-    if(
-      isTRPCClientError(listQuery.error) &&
-      listQuery.error.shape?.code === "UNAUTHORIZED"
-    ){
-      router.push("/");
-    }
-  }, [listQuery.error, router]);
 
   const [inputValue, setInputValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
