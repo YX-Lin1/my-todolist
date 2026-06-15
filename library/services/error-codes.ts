@@ -9,6 +9,7 @@ export const ServiceErrorCodes = {
   CHECK_TOKEN_FAILED: "CHECK_TOKEN_FAILED",
   TOKEN_EXPIRED: "TOKEN_EXPIRED",
   UNAUTHORIZED: "UNAUTHORIZED",
+  USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
 } as const;
 
 export type ServiceErrorCodes = keyof typeof ServiceErrorCodes;

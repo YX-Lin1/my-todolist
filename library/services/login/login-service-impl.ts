@@ -3,7 +3,7 @@ import type { UsersRepository } from "@/library/db/main/users/users-repository";
 import { ServiceError } from "../error";
 import { ServiceErrorCodes } from "../error-codes";
 import { parseRequest } from "../common/parse";
-import { loginPostResponseMapper, logoutPostResponseMapper, checkTokenPostResponseMapper } from "./login-mapper";
+import { loginPostResponseMapper, checkTokenPostResponseMapper } from "./login-mapper";
 import {
   LoginPostRequestSchema,
   type LoginPostRequest,
