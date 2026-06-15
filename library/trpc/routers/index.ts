@@ -1,12 +1,12 @@
 import { router } from "../trpc";
-import { usersRouter } from "./users/users-router";
 import { todolistsRouter } from "./todolists/todolists-router";
 import { loginRouter } from "./login/login-router";
+import { registerRouter } from "./register/register";
 
 export const appRouter = router({
-  users: usersRouter,
   todolists: todolistsRouter,
   login: loginRouter,
+  register: registerRouter,
 });
 
 export type AppRouter = typeof appRouter;
