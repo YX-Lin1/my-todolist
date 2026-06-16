@@ -43,6 +43,10 @@ export default function LoginForm() {
     });
   };
 
+  const handleRegister = () => {
+    router.push("/register");
+  };
+
   return (
     <>
       {validationError ? (
@@ -103,7 +107,7 @@ export default function LoginForm() {
 
       <div className="mt-[10px] flex items-center justify-between text-[14px]">
         <span className="text-black/50">{t("login.noAccount")}</span>
-        <Link className="underline text-black/70" href="/">
+        <Link className="underline text-black/70" href="/register" onClick={handleRegister}>
           {t("login.goRegister")}
         </Link>
       </div>

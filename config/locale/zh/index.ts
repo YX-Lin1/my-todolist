@@ -7,6 +7,7 @@ import seo from "./seo";
 import timezonesData, { regions } from "./timezones";
 import todolists from "./todolists";
 import trpc from "./trpc";
+import register from "./register";
 
 export default {
   homepage,
@@ -21,4 +22,5 @@ export default {
   },
   todolists,
   trpc,
+  register,
 };

@@ -6,5 +6,8 @@ export default {
     passwordPlaceholder: "请输入密码",
     confirmPassword: "确认密码",
     confirmPasswordPlaceholder: "请输入确认密码",
-    register: "注册",
+    submit: "注册",
+    submitting: "注册中...",
+    success: "注册成功，请登录",
+    passwordNotMatch: "密码不匹配",
 };
