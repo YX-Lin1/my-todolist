@@ -115,7 +115,7 @@ export class TodolistsServiceImpl implements TodolistsService {
     if (!existing || existing.user_id !== userId) {
       throw new ServiceError(
         new Error("todo not found"),
-        ServiceErrorCodes.USER_NOT_FOUND
+        ServiceErrorCodes.TODO_NOT_FOUND
       );
     }
   }

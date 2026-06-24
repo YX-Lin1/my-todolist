@@ -21,5 +21,6 @@ export default {
     TOKEN_EXPIRED: "Token expired.",
     UNAUTHORIZED: "Unauthorized.",
     USER_ALREADY_EXISTS: "User already exists.",
+    TODO_NOT_FOUND: "Todo not found.",
   },
 };

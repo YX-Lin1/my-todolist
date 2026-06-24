@@ -20,5 +20,6 @@ export default {
     TOKEN_EXPIRED: "令牌已过期。",
     UNAUTHORIZED: "未授权。",
     USER_ALREADY_EXISTS: "用户已存在。",
+    TODO_NOT_FOUND: "待办不存在。",
   },
 };

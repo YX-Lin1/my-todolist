@@ -21,5 +21,6 @@ export default {
     TOKEN_EXPIRED: "トークンが期限切れです。",
     UNAUTHORIZED: "未認証です。",
     USER_ALREADY_EXISTS: "ユーザーは既に存在します。",
+    TODO_NOT_FOUND: "タスクが見つかりません。",
   },
 };

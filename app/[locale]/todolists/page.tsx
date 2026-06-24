@@ -4,9 +4,11 @@ import { Button } from "@surgeteam/design-system/components/ui/button";
 import { Input } from "@surgeteam/design-system/components/ui/input";
 import { useI18n } from "@surgeteam/i18n/use-i18n";
 import { useMemo, useState } from "react";
-import { TrpcErrorPanel } from "@/app/components/trpc-error-panel";
+import { parseTrpcError, TrpcErrorPanel } from "@/app/components/trpc-error-panel";
 import { trpc } from "@/library/trpc/client";
 import { useRouter } from "@surgeteam/i18n/navigation";
+import { toast } from "sonner";
+import { translateServiceErrorCode } from "@/library/i18n/translate-service-error-code";
 
 /** 与 list 接口返回的 data 数组元素一致（id 为 uuid 字符串） */
 type TodoItem = {
@@ -26,25 +28,34 @@ export default function TodolistsPage() {
   const [inputValue, setInputValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
 
+  const toastTrpcError = (error: unknown) => {
+    const { code } = parseTrpcError(error);
+    toast.error(translateServiceErrorCode(t, code));
+  };
+
   const createMutation = trpc.todolists.create.useMutation({
     onSuccess: async () => {
       await utils.todolists.list.invalidate();
       setInputValue("");
     },
+    onError:toastTrpcError,
   });
 
   const updateMutation = trpc.todolists.update.useMutation({
     onSuccess: () => utils.todolists.list.invalidate(),
+    onError:toastTrpcError,
   });
 
   const deleteMutation = trpc.todolists.delete.useMutation({
     onSuccess: () => utils.todolists.list.invalidate(),
+    onError:toastTrpcError,
   });
 
   const logoutMutation = trpc.login.logout.useMutation({
     onSuccess: () => {
       router.push("/");
     },
+    onError:toastTrpcError,
   });
 
   // Service 返回 { data: TodoItem[] }
