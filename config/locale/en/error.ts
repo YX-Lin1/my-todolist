@@ -16,5 +16,10 @@ export default {
     INVALID_RESPONSE: "Invalid response.",
     INTERNAL_ERROR: "Internal server error.",
     USER_NOT_FOUND: "User not found.",
+    LOGIN_FAILED: "Login failed.",
+    CHECK_TOKEN_FAILED: "Check token failed.",
+    TOKEN_EXPIRED: "Token expired.",
+    UNAUTHORIZED: "Unauthorized.",
+    USER_ALREADY_EXISTS: "User already exists.",
   },
 };

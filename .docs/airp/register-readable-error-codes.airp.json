@@ -1,0 +1,459 @@
+{
+  "schemaVersion": "1.0.0",
+  "meta": {
+    "title": {
+      "zh-CN": "注册页错误码可读化改造指南",
+      "en": "Register Page Human-Readable Error Code Guide"
+    },
+    "subtitle": {
+      "zh-CN": "将 USER_ALREADY_EXISTS 等机器码映射为 i18n 用户文案",
+      "en": "Map USER_ALREADY_EXISTS and other machine codes to i18n user messages"
+    },
+    "kind": "plan-review",
+    "createdAt": "2026-06-22T01:46:00.000Z",
+    "tags": ["register", "i18n", "ServiceError", "tRPC", "error-handling"],
+    "sourceRefs": [
+      {
+        "type": "path",
+        "value": "app/[locale]/register/page.tsx",
+        "label": { "zh-CN": "注册页（需改 onError）" }
+      },
+      {
+        "type": "path",
+        "value": "library/i18n/translate-service-error-code.ts",
+        "label": { "zh-CN": "错误码翻译工具" }
+      },
+      {
+        "type": "path",
+        "value": "app/components/trpc-error-panel.tsx",
+        "label": { "zh-CN": "登录页复用的错误面板" }
+      },
+      {
+        "type": "path",
+        "value": "library/trpc/trpc.ts",
+        "label": { "zh-CN": "tRPC errorFormatter" }
+      },
+      {
+        "type": "path",
+        "value": "library/services/register/register-service-impl.ts",
+        "label": { "zh-CN": "后端抛错（无需改）" }
+      },
+      {
+        "type": "path",
+        "value": "config/locale/zh/error.ts",
+        "label": { "zh-CN": "中文错误文案" }
+      }
+    ]
+  },
+  "i18n": {
+    "defaultLocale": "zh-CN",
+    "locales": ["zh-CN", "en"]
+  },
+  "blocks": [
+    {
+      "type": "hero",
+      "id": "hero",
+      "metrics": [
+        {
+          "title": { "zh-CN": "改造步骤", "en": "Steps" },
+          "value": "3",
+          "unit": { "zh-CN": "步", "en": "steps" },
+          "tone": "accent"
+        },
+        {
+          "title": { "zh-CN": "需改文件", "en": "Files to edit" },
+          "value": "3–4",
+          "unit": { "zh-CN": "个", "en": "files" },
+          "tone": "neutral"
+        },
+        {
+          "title": { "zh-CN": "后端改动", "en": "Backend changes" },
+          "value": "0",
+          "unit": { "zh-CN": "处", "en": "changes" },
+          "tone": "positive",
+          "status": "done"
+        },
+        {
+          "title": { "zh-CN": "参考页面", "en": "Reference page" },
+          "description": { "zh-CN": "登录页已正确实现", "en": "Login page already implemented correctly" },
+          "value": "login-form",
+          "tone": "neutral"
+        }
+      ],
+      "badges": [
+        {
+          "label": { "zh-CN": "前端展示层", "en": "Presentation layer" },
+          "tone": "accent",
+          "status": "in_progress"
+        },
+        {
+          "label": { "zh-CN": "项目已有基础设施", "en": "Infra already exists" },
+          "tone": "positive",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "type": "lead",
+      "text": {
+        "zh-CN": "注册失败时页面直接显示 `[ServiceError] USER_ALREADY_EXISTS`，是因为前端使用了 `error.message` 而非 `error.data.code` + i18n 映射。项目内登录页、`TrpcErrorPanel`、`translateServiceErrorCode` 已实现完整链路，注册页只需对齐同一模式。",
+        "en": "Registration failures show `[ServiceError] USER_ALREADY_EXISTS` because the page uses `error.message` instead of `error.data.code` with i18n. Login page, TrpcErrorPanel, and translateServiceErrorCode already implement the full pipeline; the register page only needs to follow the same pattern."
+      }
+    },
+    {
+      "type": "section",
+      "id": "diagnosis",
+      "level": 2,
+      "title": { "zh-CN": "问题诊断", "en": "Diagnosis" },
+      "lead": {
+        "zh-CN": "根因在前端展示，不在后端校验逻辑。",
+        "en": "Root cause is frontend display, not backend validation."
+      },
+      "children": [
+        {
+          "type": "comparison",
+          "labelBefore": { "zh-CN": "当前（错误）", "en": "Current (wrong)" },
+          "labelAfter": { "zh-CN": "目标（正确）", "en": "Target (correct)" },
+          "before": [
+            {
+              "type": "code",
+              "language": "tsx",
+              "filename": "register/page.tsx",
+              "code": "onError: (error) => {\n  toast.error(error.message);\n}"
+            },
+            {
+              "type": "paragraph",
+              "text": {
+                "zh-CN": "用户看到：`[ServiceError] USER_ALREADY_EXISTS`（来自 ServiceError 构造函数）",
+                "en": "User sees: `[ServiceError] USER_ALREADY_EXISTS` (from ServiceError constructor)"
+              }
+            }
+          ],
+          "after": [
+            {
+              "type": "code",
+              "language": "tsx",
+              "filename": "register/page.tsx",
+              "code": "onError: (error) => {\n  if (isTRPCClientError(error)) {\n    const { code } = parseTrpcError(error);\n    toast.error(translateServiceErrorCode(t, code));\n    return;\n  }\n  toast.error(t(\"error.codes.UNKNOWN\"));\n}"
+            },
+            {
+              "type": "paragraph",
+              "text": {
+                "zh-CN": "用户看到：`用户已存在。`（来自 `config/locale/zh/error.ts`）",
+                "en": "User sees: localized message from `config/locale/zh/error.ts`"
+              }
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": { "zh-CN": "设计原则", "en": "Design principle" },
+          "body": {
+            "zh-CN": "**后端**只抛稳定机器码（`ServiceErrorCodes.USER_ALREADY_EXISTS`）；**前端/i18n** 负责用户可读文案。这样改文案、做多语言都不需要动 Service 层。",
+            "en": "**Backend** throws stable machine codes only; **frontend/i18n** owns user-facing text. Copy and locale changes never touch the service layer."
+          }
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "data-flow",
+      "level": 2,
+      "title": { "zh-CN": "错误数据流", "en": "Error data flow" },
+      "children": [
+        {
+          "type": "mermaid",
+          "diagramKind": "sequence",
+          "title": { "zh-CN": "注册失败时的完整链路", "en": "Full chain on registration failure" },
+          "source": "sequenceDiagram\n  participant Page as register/page.tsx\n  participant Client as tRPC Client\n  participant API as register Router\n  participant Svc as RegisterServiceImpl\n  participant Fmt as errorFormatter\n\n  Page->>Client: mutate({ account, password })\n  Client->>API: POST /api/trpc/register.register\n  API->>Svc: register()\n  Svc-->>API: throw ServiceError(USER_ALREADY_EXISTS)\n  API->>Fmt: TRPCError.cause = ServiceError\n  Fmt-->>Client: data.code = USER_ALREADY_EXISTS\n  Client-->>Page: onError(error)\n  Note over Page: parseTrpcError → translateServiceErrorCode → toast",
+          "complexity": "medium"
+        },
+        {
+          "type": "definitionList",
+          "items": [
+            {
+              "term": { "zh-CN": "ServiceError.message", "en": "ServiceError.message" },
+              "definition": {
+                "zh-CN": "固定格式 `[ServiceError] ${code}`，仅供日志/调试，**不应直接展示给用户**。",
+                "en": "Fixed format `[ServiceError] ${code}` — for logs/debug only, **not for end users**."
+              }
+            },
+            {
+              "term": { "zh-CN": "error.data.code", "en": "error.data.code" },
+              "definition": {
+                "zh-CN": "tRPC `errorFormatter` 从 `ServiceError.code` 透传的业务码，前端翻译的**唯一输入**。",
+                "en": "Business code passed through by tRPC `errorFormatter` from `ServiceError.code` — the **sole input** for frontend translation."
+              }
+            },
+            {
+              "term": { "zh-CN": "translateServiceErrorCode", "en": "translateServiceErrorCode" },
+              "definition": {
+                "zh-CN": "查 `error.codes.${code}` i18n key；未知码回退到 `error.codes.UNKNOWN`。",
+                "en": "Looks up `error.codes.${code}` i18n key; unknown codes fall back to `error.codes.UNKNOWN`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "implementation",
+      "level": 2,
+      "title": { "zh-CN": "实施步骤", "en": "Implementation steps" },
+      "children": [
+        {
+          "type": "flowSteps",
+          "steps": [
+            {
+              "title": { "zh-CN": "步骤 1：补全 i18n 文案", "en": "Step 1: Complete i18n copy" },
+              "description": {
+                "zh-CN": "在 `config/locale/*/error.ts` 的 `codes` 对象中，为每个 `ServiceErrorCodes` 常量添加同名 key。中文已有 `USER_ALREADY_EXISTS`；英文、日文仍需补齐。",
+                "en": "Add a matching key in `config/locale/*/error.ts` `codes` for each `ServiceErrorCodes` constant. zh already has USER_ALREADY_EXISTS; en and ja still need it."
+              },
+              "status": "partial"
+            },
+            {
+              "title": { "zh-CN": "步骤 2：改注册页 onError", "en": "Step 2: Fix register page onError" },
+              "description": {
+                "zh-CN": "引入 `isTRPCClientError`、`parseTrpcError`、`translateServiceErrorCode`，用 `data.code` 翻译后 toast，不再使用 `error.message`。",
+                "en": "Import isTRPCClientError, parseTrpcError, translateServiceErrorCode; toast translated text from data.code, not error.message."
+              },
+              "status": "pending"
+            },
+            {
+              "title": { "zh-CN": "步骤 3：浏览器验证", "en": "Step 3: Verify in browser" },
+              "description": {
+                "zh-CN": "用已注册账号再次注册，Network 面板确认 `error.data.code === \"USER_ALREADY_EXISTS\"`，页面 toast 显示中文文案。",
+                "en": "Re-register with an existing account; confirm error.data.code in Network tab and localized toast on page."
+              },
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": { "zh-CN": "步骤 1 示例：i18n", "en": "Step 1 example: i18n" }
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "filename": "config/locale/en/error.ts",
+          "code": "codes: {\n  // ...existing keys...\n  USER_ALREADY_EXISTS:\n    \"This account is already registered. Please sign in or use a different account.\",\n  LOGIN_FAILED: \"Login failed.\",\n  CHECK_TOKEN_FAILED: \"Token validation failed.\",\n  TOKEN_EXPIRED: \"Your session has expired.\",\n  UNAUTHORIZED: \"You are not authorized.\",\n}"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": { "zh-CN": "步骤 2 完整代码：register/page.tsx", "en": "Step 2 full code: register/page.tsx" }
+        },
+        {
+          "type": "code",
+          "language": "tsx",
+          "filename": "app/[locale]/register/page.tsx",
+          "code": "import { isTRPCClientError } from \"@trpc/react-query\";\nimport { parseTrpcError } from \"@/app/components/trpc-error-panel\";\nimport { translateServiceErrorCode } from \"@/library/i18n/translate-service-error-code\";\n\nconst registerMutation = trpc.register.register.useMutation({\n  onSuccess: () => {\n    toast.success(t(\"register.success\"));\n    router.push(\"/\");\n  },\n  onError: (error) => {\n    if (isTRPCClientError(error)) {\n      const { code } = parseTrpcError(error);\n      toast.error(translateServiceErrorCode(t, code));\n      return;\n    }\n    toast.error(t(\"error.codes.UNKNOWN\"));\n  },\n});"
+        },
+        {
+          "type": "decision",
+          "id": "toast-vs-panel",
+          "title": { "zh-CN": "展示方式：Toast 还是 TrpcErrorPanel？", "en": "Display: Toast or TrpcErrorPanel?" },
+          "context": {
+            "zh-CN": "登录页使用 TrpcErrorPanel（带标题、提示、详情 JSON）；注册页当前使用 sonner toast。",
+            "en": "Login uses TrpcErrorPanel (title, hint, details JSON); register currently uses sonner toast."
+          },
+          "options": [
+            {
+              "label": { "zh-CN": "方案 A：继续 toast", "en": "Option A: Keep toast" },
+              "pros": {
+                "zh-CN": "改动最小，与 `passwordNotMatch` 等前端校验提示风格一致。",
+                "en": "Minimal change; consistent with frontend validation toasts like passwordNotMatch."
+              },
+              "cons": {
+                "zh-CN": "无法展示 error.details 调试信息。",
+                "en": "Cannot show error.details for debugging."
+              }
+            },
+            {
+              "label": { "zh-CN": "方案 B：TrpcErrorPanel", "en": "Option B: TrpcErrorPanel" },
+              "pros": {
+                "zh-CN": "与登录页视觉统一；可展开 details（如 INVALID_REQUEST 字段校验）。",
+                "en": "Visual consistency with login; expandable details for field validation errors."
+              },
+              "cons": {
+                "zh-CN": "需在 register locale 加 errorTitle/errorHint 等 key。",
+                "en": "Requires errorTitle/errorHint keys in register locale."
+              }
+            }
+          ],
+          "chosen": { "zh-CN": "方案 A（toast）", "en": "Option A (toast)" },
+          "rationale": {
+            "zh-CN": "注册页错误场景简单（主要是账号已存在），toast 足够；需要详情时再切方案 B。",
+            "en": "Register errors are simple (mostly account exists); toast is sufficient. Switch to B if details are needed."
+          },
+          "status": "accepted"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "checklist",
+      "level": 2,
+      "title": { "zh-CN": "改造清单", "en": "Change checklist" },
+      "children": [
+        {
+          "type": "fileChangeList",
+          "items": [
+            {
+              "path": "config/locale/zh/error.ts",
+              "change": "modified",
+              "note": { "zh-CN": "✅ 已有 USER_ALREADY_EXISTS" }
+            },
+            {
+              "path": "config/locale/en/error.ts",
+              "change": "modified",
+              "note": { "zh-CN": "需补 USER_ALREADY_EXISTS 及其他 ServiceErrorCodes" }
+            },
+            {
+              "path": "config/locale/ja/error.ts",
+              "change": "modified",
+              "note": { "zh-CN": "需补 USER_ALREADY_EXISTS 及其他 ServiceErrorCodes" }
+            },
+            {
+              "path": "app/[locale]/register/page.tsx",
+              "change": "modified",
+              "note": { "zh-CN": "onError 改用 parseTrpcError + translateServiceErrorCode" }
+            }
+          ]
+        },
+        {
+          "type": "checklist",
+          "items": [
+            {
+              "label": { "zh-CN": "三个 locale 的 error.codes 与 ServiceErrorCodes 对齐" },
+              "checked": false,
+              "status": "partial"
+            },
+            {
+              "label": { "zh-CN": "register/page.tsx onError 不再使用 error.message" },
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": { "zh-CN": "重复注册账号，toast 显示「用户已存在。」" },
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": { "zh-CN": "切换 en/ja locale 后错误文案正确" },
+              "checked": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "troubleshooting",
+      "level": 2,
+      "title": { "zh-CN": "排错对照表", "en": "Troubleshooting" },
+      "children": [
+        {
+          "type": "table",
+          "caption": { "zh-CN": "改完后若仍异常，按此表排查", "en": "If issues persist after changes, use this table" },
+          "columns": [
+            { "key": "symptom", "label": { "zh-CN": "现象", "en": "Symptom" } },
+            { "key": "cause", "label": { "zh-CN": "可能原因", "en": "Likely cause" } },
+            { "key": "fix", "label": { "zh-CN": "处理", "en": "Fix" } }
+          ],
+          "rows": [
+            {
+              "symptom": { "zh-CN": "仍显示 `[ServiceError] ...`", "en": "Still shows `[ServiceError] ...`" },
+              "cause": { "zh-CN": "仍在用 error.message", "en": "Still using error.message" },
+              "fix": { "zh-CN": "确认 onError 已改为 translateServiceErrorCode", "en": "Confirm onError uses translateServiceErrorCode" }
+            },
+            {
+              "symptom": { "zh-CN": "显示「发生未知错误。」", "en": "Shows unknown error message" },
+              "cause": { "zh-CN": "data.code 为空或 i18n 缺 key", "en": "data.code empty or missing i18n key" },
+              "fix": { "zh-CN": "Network 看响应体；补 error.codes.* 文案", "en": "Check Network response; add error.codes.* entries" }
+            },
+            {
+              "symptom": { "zh-CN": "显示「服务器内部错误。」", "en": "Shows internal server error" },
+              "cause": { "zh-CN": "data.code 为 INTERNAL_ERROR", "en": "data.code is INTERNAL_ERROR" },
+              "fix": { "zh-CN": "register router 显式 throw TRPCError({ cause: err })", "en": "Explicitly throw TRPCError({ cause: err }) in register router" }
+            }
+          ]
+        },
+        {
+          "type": "collapsible",
+          "summary": { "zh-CN": "可选增强：register router 显式包装 ServiceError", "en": "Optional: wrap ServiceError in register router" },
+          "defaultOpen": false,
+          "children": [
+            {
+              "type": "code",
+              "language": "tsx",
+              "filename": "library/trpc/routers/register/register.ts",
+              "code": "import { TRPCError } from \"@trpc/server\";\nimport { isServiceError } from \"@/library/services/error\";\n\ntry {\n  return await registerService.register(input);\n} catch (err) {\n  if (isServiceError(err)) {\n    throw new TRPCError({\n      code: \"CONFLICT\",\n      message: err.code,\n      cause: err,\n    });\n  }\n  throw err;\n}"
+            },
+            {
+              "type": "paragraph",
+              "text": {
+                "zh-CN": "仅当 Network 中 `data.code` 不是 `USER_ALREADY_EXISTS` 时需要。`serviceErrorProxy` 通常已足够。",
+                "en": "Only needed when Network shows data.code !== USER_ALREADY_EXISTS. serviceErrorProxy is usually sufficient."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "validation-layer",
+      "level": 2,
+      "title": { "zh-CN": "附录：校验应放在哪一层？", "en": "Appendix: Where should validation live?" },
+      "children": [
+        {
+          "type": "table",
+          "caption": { "zh-CN": "「账号是否已注册」各层职责", "en": "Responsibilities per layer for account existence" },
+          "columns": [
+            { "key": "layer", "label": { "zh-CN": "层级", "en": "Layer" } },
+            { "key": "required", "label": { "zh-CN": "是否必须", "en": "Required" }, "cellKind": "badge" },
+            { "key": "role", "label": { "zh-CN": "作用", "en": "Role" } }
+          ],
+          "rows": [
+            {
+              "layer": { "zh-CN": "前端（格式/密码一致）", "en": "Frontend (format/password match)" },
+              "required": "optional",
+              "role": { "zh-CN": "UX 提前反馈，可被绕过", "en": "Early UX feedback; bypassable" }
+            },
+            {
+              "layer": { "zh-CN": "后端 Service（findByAccount）", "en": "Backend Service (findByAccount)" },
+              "required": "required",
+              "role": { "zh-CN": "业务规则、安全、当前项目已实现", "en": "Business rules, security; already implemented" }
+            },
+            {
+              "layer": { "zh-CN": "数据库 UNIQUE 约束", "en": "Database UNIQUE constraint" },
+              "required": "recommended",
+              "role": { "zh-CN": "并发场景最后一道防线", "en": "Last line of defense under concurrency" }
+            }
+          ]
+        },
+        {
+          "type": "constraint",
+          "rule": {
+            "zh-CN": "前端错误文案用 `register.*`（纯前端校验）；后端业务错误用 `error.codes.*` + `translateServiceErrorCode`。",
+            "en": "Frontend-only errors use register.* keys; backend business errors use error.codes.* + translateServiceErrorCode."
+          },
+          "scope": { "zh-CN": "全项目错误展示规范", "en": "Project-wide error display convention" },
+          "nonNegotiable": true
+        }
+      ]
+    },
+    {
+      "type": "agentNote",
+      "visible": false,
+      "text": "Report generated from my-todolist codebase analysis. zh/error.ts already includes USER_ALREADY_EXISTS; en/ja incomplete. Register page still uses error.message as of 2026-06-22."
+    }
+  ]
+}

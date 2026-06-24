@@ -7,6 +7,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/library/surge/design-system/components/ui/input";
 import { Button } from "@/library/surge/design-system/components/ui/button";
+import { parseTrpcError } from "@/app/components/trpc-error-panel";
+import { isTRPCClientError } from "@trpc/react-query";
+import { translateServiceErrorCode } from "@/library/i18n/translate-service-error-code";
 
 export default function RegisterPage() {
   const { t } = useI18n();
@@ -21,7 +24,12 @@ export default function RegisterPage() {
       router.push("/");
     },
     onError: (error) => {
-      toast.error(error.message);
+      if(isTRPCClientError(error)) {
+        const errorInfo = parseTrpcError(error);
+        toast.error(translateServiceErrorCode(t, errorInfo.code));
+        return;
+      }
+      toast.error(t("error.codes.UNKNOWN"));
     },
   });
 
