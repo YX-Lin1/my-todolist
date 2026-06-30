@@ -8,6 +8,8 @@ export default {
   submit: "登录",
   submitting: "登录中...",
   validationEmpty: "请输入账号和密码",
+  validationAccount: "账号至少2位",
+  validationPassword: "密码至少8位",
   noAccount: "还没有账号？",
   goRegister: "去注册",
   errorTitle: "登录失败",

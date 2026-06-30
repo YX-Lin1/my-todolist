@@ -8,6 +8,8 @@ export default {
   submit: "ログイン",
   submitting: "ログイン中…",
   validationEmpty: "アカウントとパスワードを入力してください",
+  validationAccount: "アカウントは2文字以上で入力してください",
+  validationPassword: "パスワードは8文字以上で入力してください",
   noAccount: "アカウントがないですか？",
   goRegister: "登録する",
   errorTitle: "ログイン失敗",
