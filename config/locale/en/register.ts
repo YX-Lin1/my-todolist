@@ -9,5 +9,8 @@ export default {
   submit: "Register",
   submitting: "Registering...",
   success: "Register successfully, please login",
-  passwordNotMatch: "Password not match",
+  passwordNotMatch: "Confirm password and password do not match",
+  validationAccount: "Account must be at least 2 characters",
+  validationPassword: "Password must be at least 8 characters",
+  validationConfirmPassword: "Confirm password must be at least 8 characters",
 };

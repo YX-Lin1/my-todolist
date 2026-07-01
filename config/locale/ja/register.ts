@@ -9,5 +9,8 @@ export default {
   submit: "登録",
   submitting: "登録中...",
   success: "登録成功、ログインしてください",
-  passwordNotMatch: "パスワードが一致しません",
+  passwordNotMatch: "確認パスワードとパスワードが一致しません",
+  validationAccount: "アカウントは2文字以上で入力してください",
+  validationPassword: "パスワードは8文字以上で入力してください",
+  validationConfirmPassword: "確認パスワードは8文字以上で入力してください",
 };
