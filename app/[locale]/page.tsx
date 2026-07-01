@@ -1,8 +1,6 @@
 import { cookies } from "next/headers";
 import { createAppContainer } from "@/library/di/container";
 import { redirect } from "next/navigation";
-import LoginForm from "@/app/components/login-form";
-import LoginShell from "@/app/components/login-shell";
 
 const SESSION_COOKIE_NAME = "MY-TOKEN";
 
@@ -24,10 +22,11 @@ export default async function HomePage() {
   if(isAuthenticated) {
     redirect("/todolists");
   }
+  else {
+    redirect("/login");
+  }
 
   return (
-    <LoginShell>
-      <LoginForm />
-    </LoginShell>
+    <></>
   );
 }

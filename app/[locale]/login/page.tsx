@@ -22,7 +22,7 @@ function LoginFormSchema() {
   const {t} = useI18n();
   return z.object({
     account: z.string().trim().min(2, t("login.validationAccount")),
-    password: z.string().trim().min(8, t("login.validationPassword")),
+    password: z.string().trim().min(6, t("login.validationPassword")),
   });
 }
 type LoginFormValues = z.infer<ReturnType<typeof LoginFormSchema>>;

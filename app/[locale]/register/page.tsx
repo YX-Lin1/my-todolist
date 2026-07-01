@@ -26,8 +26,8 @@ function RegisterFormSchema() {
   
   return z.object({
     account: z.string().trim().min(2, t("register.validationAccount")),
-    password: z.string().trim().min(8, t("register.validationPassword")),
-    confirmPassword: z.string().trim().min(8, t("register.validationConfirmPassword")),
+    password: z.string().trim().min(6, t("register.validationPassword")),
+    confirmPassword: z.string().trim().min(6, t("register.validationConfirmPassword")),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: t("register.passwordNotMatch"),
