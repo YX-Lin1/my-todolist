@@ -124,44 +124,6 @@ export default function LoginForm() {
         </Button>
       </form>
     </Form>
-      {/* <div className="mb-5">
-        <span className="mb-2 block font-bold text-black text-sm">
-          {t("login.account")}
-        </span>
-        <Input
-          className="h-10 w-full rounded-md bg-white p-2 text-sm"
-          disabled={loginMutation.isPending}
-          placeholder={t("login.accountPlaceholder")}
-          type="text"
-          value={account}
-          onChange={(e) => setAccount(e.target.value)}
-        />
-      </div> */}
-
-      {/* <div className="mb-5">
-        <span className="mb-2 block font-bold text-black text-sm">
-          {t("login.password")}
-        </span>
-        <Input
-          className="h-10 w-full rounded-md bg-white p-2 text-sm"
-          disabled={loginMutation.isPending}
-          placeholder={t("login.passwordPlaceholder")}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-        />
-      </div> */}
-
-      {/* <Button
-        className="w-full rounded bg-[#39bd46ff] px-4 py-2 text-base text-white hover:bg-[#32a03c]"
-        disabled={loginMutation.isPending}
-        onClick={form.handleSubmit(onSubmit)}
-        size="lg"
-        type="button"
-      >
-        {loginMutation.isPending ? t("login.submitting") : t("login.submit")}
-      </Button> */}
 
       <div className="mt-[10px] flex items-center justify-between text-[14px]">
         <span className="text-black/50">{t("login.noAccount")}</span>
