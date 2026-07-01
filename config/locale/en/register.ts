@@ -11,6 +11,6 @@ export default {
   success: "Register successfully, please login",
   passwordNotMatch: "Confirm password and password do not match",
   validationAccount: "Account must be at least 2 characters",
-  validationPassword: "Password must be at least 8 characters",
-  validationConfirmPassword: "Confirm password must be at least 8 characters",
+  validationPassword: "Password must be at least 6 characters",
+  validationConfirmPassword: "Confirm password must be at least 6 characters",
 };

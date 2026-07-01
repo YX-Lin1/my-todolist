@@ -11,6 +11,6 @@ export default {
     success: "注册成功，请登录",
     passwordNotMatch: "确认密码与密码不匹配",
     validationAccount: "账号至少需要2个字符",
-    validationPassword: "密码至少需要8个字符",
-    validationConfirmPassword: "确认密码至少需要8个字符",
+    validationPassword: "密码至少需要6位",
+    validationConfirmPassword: "确认密码至少需要6位",
 };

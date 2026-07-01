@@ -9,7 +9,7 @@ export default {
   submitting: "Logging in...",
   validationEmpty: "Enter your account and password",
   validationAccount: "Account must be at least 2 characters",
-  validationPassword: "Password must be at least 8 characters",
+  validationPassword: "Password must be at least 6 characters",
   noAccount: "Don't have an account?",
   goRegister: "Go to register",
   errorTitle: "Login failed",

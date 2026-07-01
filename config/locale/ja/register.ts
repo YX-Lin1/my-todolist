@@ -11,6 +11,6 @@ export default {
   success: "登録成功、ログインしてください",
   passwordNotMatch: "確認パスワードとパスワードが一致しません",
   validationAccount: "アカウントは2文字以上で入力してください",
-  validationPassword: "パスワードは8文字以上で入力してください",
-  validationConfirmPassword: "確認パスワードは8文字以上で入力してください",
+  validationPassword: "パスワードは6文字以上で入力してください",
+  validationConfirmPassword: "確認パスワードは6文字以上で入力してください",
 };
