@@ -63,12 +63,9 @@ export default function TodolistsPage() {
   // ?? []：如果listQuery.data为空，则返回空数组
   const items: TodoItem[] = listQuery.data?.data ?? [];
 
-  // 搜索：与旧 demo 相同，只过滤当前列表，不调接口
   const filteredItems = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
-    // 如果搜索关键词为空，则返回所有列表
     if (!keyword) return items;
-    // 如果搜索关键词不为空，则过滤列表
     return items.filter((item) => item.todo.toLowerCase().includes(keyword));
   }, [items, searchValue]);
   // 只有items或searchValue变化时，才重新计算filteredItems
