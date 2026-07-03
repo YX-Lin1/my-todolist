@@ -1,0 +1,630 @@
+{
+  "schemaVersion": "1.0.0",
+  "meta": {
+    "title": "待办功能升级方案（shadcn UI）",
+    "subtitle": "面向 my-todolist 的弹窗表单、优先级排序、状态筛选与 deadline 设计",
+    "kind": "plan-review",
+    "createdAt": "2026-07-02T09:09:00.000Z",
+    "authors": ["Cursor"],
+    "tags": ["todolist", "shadcn", "dialog", "priority", "deadline", "filter"],
+    "sourceRefs": [
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/page.tsx",
+        "label": "当前待办页"
+      },
+      {
+        "type": "path",
+        "value": "library/trpc/routers/todolists/todolists-router.ts",
+        "label": "tRPC 路由"
+      },
+      {
+        "type": "path",
+        "value": "library/services/todolists/todolists-request.schema.ts",
+        "label": "请求 schema"
+      },
+      {
+        "type": "path",
+        "value": "library/services/todolists/todolists-response.schema.ts",
+        "label": "响应 schema"
+      },
+      {
+        "type": "path",
+        "value": "library/db/main/drizzle/schema/main-schema/todolists-table.ts",
+        "label": "数据库表定义"
+      },
+      {
+        "type": "path",
+        "value": "library/surge/design-system/components/ui/dialog.tsx",
+        "label": "可复用 Dialog 组件"
+      },
+      {
+        "type": "path",
+        "value": "library/surge/design-system/components/ui/calendar.tsx",
+        "label": "可复用 Calendar 组件"
+      },
+      {
+        "type": "path",
+        "value": "library/surge/design-system/components/ui/select.tsx",
+        "label": "可复用 Select 组件"
+      },
+      {
+        "type": "path",
+        "value": "library/surge/design-system/components/ui/form.tsx",
+        "label": "可复用 Form 组件"
+      }
+    ]
+  },
+  "i18n": {
+    "defaultLocale": "zh-CN",
+    "locales": ["zh-CN"]
+  },
+  "blocks": [
+    {
+      "type": "hero",
+      "id": "hero",
+      "metrics": [
+        {
+          "title": "新增核心能力",
+          "value": "3",
+          "unit": "项",
+          "tone": "accent"
+        },
+        {
+          "title": "涉及层级",
+          "value": "4",
+          "unit": "层",
+          "description": "页面、表单组件、tRPC schema、数据库"
+        },
+        {
+          "title": "现有可复用 UI",
+          "value": "4",
+          "unit": "类",
+          "description": "Dialog / Form / Select / Calendar",
+          "status": "pass"
+        },
+        {
+          "title": "推荐策略",
+          "value": "渐进式改造",
+          "description": "先补数据模型，再切 UI 交互"
+        }
+      ],
+      "badges": [
+        {
+          "label": "shadcn 风格",
+          "tone": "accent",
+          "status": "in_progress"
+        },
+        {
+          "label": "前后端都需改",
+          "tone": "warning",
+          "status": "warning"
+        }
+      ]
+    },
+    {
+      "type": "lead",
+      "text": "当前 `todolists` 页面只支持文本新增、文本搜索、完成切换与删除；你提出的弹窗新建/编辑、优先级排序、deadline、状态筛选都可以在现有项目里落地，而且项目内已经具备 `Dialog`、`Form`、`Select`、`Calendar` 等 shadcn 风格基础组件。最可行的方案是先扩展 todo 数据模型，再把页面改造成“筛选栏 + 列表 + 共用表单弹窗”的结构。"
+    },
+    {
+      "type": "section",
+      "id": "current-gap",
+      "level": 2,
+      "title": "现状与缺口",
+      "lead": "先明确为什么这次改造不能只改页面。",
+      "children": [
+        {
+          "type": "statusBoard",
+          "items": [
+            {
+              "label": "新增待办方式",
+              "status": "partial",
+              "detail": "当前是页面内联输入框，不是弹窗。"
+            },
+            {
+              "label": "编辑待办能力",
+              "status": "fail",
+              "detail": "当前只有完成切换和删除，没有编辑入口。"
+            },
+            {
+              "label": "优先级字段",
+              "status": "fail",
+              "detail": "数据库、request、response 都没有 `priority`。"
+            },
+            {
+              "label": "deadline 字段",
+              "status": "fail",
+              "detail": "数据库、request、response 都没有 `deadline`。"
+            },
+            {
+              "label": "排序规则",
+              "status": "fail",
+              "detail": "当前列表保持接口返回顺序，没有高优先级前置和已完成后置。"
+            },
+            {
+              "label": "筛选能力",
+              "status": "partial",
+              "detail": "当前只有文本搜索，没有完成/未完成状态筛选。"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "关键判断",
+          "body": "这次需求不是纯 UI 美化，而是 **数据结构 + 交互结构** 一起升级。若只在前端临时拼字段，刷新后会丢失，也无法保证排序与筛选一致。"
+        },
+        {
+          "type": "table",
+          "caption": "当前代码与目标能力的差距",
+          "columns": [
+            { "key": "area", "label": "区域" },
+            { "key": "current", "label": "当前实现" },
+            { "key": "target", "label": "目标实现" }
+          ],
+          "rows": [
+            {
+              "area": "新增/编辑",
+              "current": "页面两个 Input 区域，新增和搜索分离，无法编辑",
+              "target": "统一 TodoFormDialog，支持 create / edit 两种模式"
+            },
+            {
+              "area": "数据字段",
+              "current": "`todo` + `completed`",
+              "target": "`todo` + `completed` + `priority` + `deadline`"
+            },
+            {
+              "area": "筛选",
+              "current": "仅关键字搜索",
+              "target": "关键字 + 状态（全部/未完成/已完成）"
+            },
+            {
+              "area": "排序",
+              "current": "无明确排序策略",
+              "target": "未完成优先，其次高优先级，再按 deadline/创建时间"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "target-design",
+      "level": 2,
+      "title": "推荐方案",
+      "lead": "采用“单页列表 + 顶部筛选栏 + 共用弹窗表单”的模式，符合你的目标，也最贴近 shadcn 的常见组合。",
+      "children": [
+        {
+          "type": "decision",
+          "id": "shared-dialog-form",
+          "title": "新建与编辑共用一套弹窗表单",
+          "context": "需求明确要求新建窗口与编辑窗口共用一套实现。",
+          "options": [
+            {
+              "label": "方案 A：独立 CreateDialog / EditDialog",
+              "pros": "实现直观，局部状态简单。",
+              "cons": "字段、校验、按钮文案和提交流程重复，后续维护成本高。"
+            },
+            {
+              "label": "方案 B：TodoFormDialog 通过 mode 控制 create / edit",
+              "pros": "复用字段、校验、布局、日期选择逻辑，更容易保持一致体验。",
+              "cons": "需要整理初始值与提交分支。"
+            }
+          ],
+          "chosen": "方案 B：TodoFormDialog",
+          "rationale": "需求本身就要求共用，新建/编辑字段高度一致，只差默认值与提交 mutation，复用是最佳选择。",
+          "status": "accepted"
+        },
+        {
+          "type": "architectureOverview",
+          "overview": {
+            "type": "mermaid",
+            "diagramKind": "flowchart",
+            "title": "待办页目标结构",
+            "source": "flowchart TD\n  A[TodolistsPage] --> B[FilterBar]\n  A --> C[TodoList]\n  A --> D[TodoFormDialog]\n  B --> E[searchText]\n  B --> F[statusFilter]\n  C --> G[sortedFilteredItems]\n  C --> H[edit action]\n  C --> I[toggle complete]\n  C --> J[delete]\n  H --> D\n  D --> K[react-hook-form]\n  K --> L[todo]\n  K --> M[priority select]\n  K --> N[deadline picker]\n  D --> O[create mutation / update mutation]",
+            "complexity": "medium"
+          },
+          "modules": [
+            {
+              "title": "FilterBar",
+              "description": "顶部筛选区域，包含关键字输入、状态筛选、创建按钮。"
+            },
+            {
+              "title": "TodoList",
+              "description": "渲染排序后的待办列表，每项显示文本、优先级、deadline、操作按钮。"
+            },
+            {
+              "title": "TodoFormDialog",
+              "description": "复用 shadcn `Dialog + Form + Select + Calendar`，处理新建与编辑。"
+            },
+            {
+              "title": "Derived State",
+              "description": "通过 `useMemo` 统一计算筛选和排序，避免列表逻辑分散。"
+            }
+          ]
+        },
+        {
+          "type": "comparison",
+          "labelBefore": "当前页面结构",
+          "labelAfter": "建议页面结构",
+          "before": [
+            {
+              "type": "bulletList",
+              "items": [
+                "搜索输入框 + 占位按钮",
+                "新增输入框 + 添加按钮",
+                "列表项只有 checkbox / 文本 / 删除按钮"
+              ]
+            }
+          ],
+          "after": [
+            {
+              "type": "bulletList",
+              "items": [
+                "筛选栏：搜索输入框 + 状态 Select + 新建按钮",
+                "列表项：checkbox + 文本 + priority badge + deadline + 编辑/删除按钮",
+                "共用弹窗：标题、todo 输入、priority Select、deadline 日期选择器、提交按钮"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "data-contract",
+      "level": 2,
+      "title": "数据模型与接口改造",
+      "lead": "为了真正支持排序、筛选和编辑，推荐先补全数据库与 schema。",
+      "children": [
+        {
+          "type": "definitionList",
+          "items": [
+            {
+              "term": "priority",
+              "definition": "建议使用字符串枚举：`high | medium | low`，便于前后端传输和 UI 文案映射。"
+            },
+            {
+              "term": "deadline",
+              "definition": "建议允许为空；有值时使用 ISO 日期字符串传输，在前端转成 `Date` 做展示。"
+            },
+            {
+              "term": "排序主规则",
+              "definition": "先按 `completed`，未完成在前；再按 `priority`，高优先级在前；最后可按 `deadline` 升序，缺失 deadline 的放后。"
+            }
+          ]
+        },
+        {
+          "type": "codeDiff",
+          "filename": "library/db/main/drizzle/schema/main-schema/todolists-table.ts",
+          "language": "typescript",
+          "before": "export const todoTable = mainSchema.table(\"todolists\", {\n  id: uuid(\"id\").primaryKey(),\n  user_id: uuid(\"user_id\").references(() => usersTable.id).notNull(),\n  todo: varchar(\"todo\", { length: 255 }).notNull(),\n  completed: boolean(\"completed\").notNull().default(false),\n  created_at: timestamp(\"created_at\").defaultNow(),\n  updated_at: timestamp(\"updated_at\").defaultNow(),\n});",
+          "after": "export const todoTable = mainSchema.table(\"todolists\", {\n  id: uuid(\"id\").primaryKey(),\n  user_id: uuid(\"user_id\").references(() => usersTable.id).notNull(),\n  todo: varchar(\"todo\", { length: 255 }).notNull(),\n  priority: varchar(\"priority\", { length: 16 }).notNull().default(\"medium\"),\n  deadline: timestamp(\"deadline\"),\n  completed: boolean(\"completed\").notNull().default(false),\n  created_at: timestamp(\"created_at\").defaultNow(),\n  updated_at: timestamp(\"updated_at\").defaultNow(),\n});"
+        },
+        {
+          "type": "fileChangeList",
+          "items": [
+            {
+              "path": "library/db/main/drizzle/schema/main-schema/todolists-table.ts",
+              "change": "modified",
+              "note": "新增 `priority`、`deadline` 字段。"
+            },
+            {
+              "path": "library/services/todolists/todolists-request.schema.ts",
+              "change": "modified",
+              "note": "create/update 入参增加 `priority`、`deadline`。"
+            },
+            {
+              "path": "library/services/todolists/todolists-response.schema.ts",
+              "change": "modified",
+              "note": "list/create/update 返回值增加 `priority`、`deadline`。"
+            },
+            {
+              "path": "library/services/todolists/todolists-service-impl.ts",
+              "change": "modified",
+              "note": "创建、更新、列表映射需要处理新增字段。"
+            },
+            {
+              "path": "library/db/main/todolists/todolists-repository-impl.ts",
+              "change": "modified",
+              "note": "Repository 层持久化 priority / deadline，并可下沉默认排序。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "推荐的请求/响应字段",
+          "columns": [
+            { "key": "field", "label": "字段" },
+            { "key": "type", "label": "类型" },
+            { "key": "required", "label": "是否必填" },
+            { "key": "note", "label": "说明" }
+          ],
+          "rows": [
+            {
+              "field": "todo",
+              "type": "string",
+              "required": "是",
+              "note": "文本内容，继续做 trim 和非空校验。"
+            },
+            {
+              "field": "priority",
+              "type": "\"high\" | \"medium\" | \"low\"",
+              "required": "是",
+              "note": "建议 create 默认 `medium`。"
+            },
+            {
+              "field": "deadline",
+              "type": "string | null",
+              "required": "否",
+              "note": "前端表单可为空；传输层建议 ISO 字符串。"
+            },
+            {
+              "field": "completed",
+              "type": "boolean",
+              "required": "是",
+              "note": "编辑和勾选切换都复用同一字段。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "ui-pattern",
+      "level": 2,
+      "title": "UI 组件组合建议",
+      "lead": "尽量复用项目现有 shadcn 风格组件，不要重新造轮子。",
+      "children": [
+        {
+          "type": "collection",
+          "variant": "card",
+          "title": "组件选型",
+          "items": [
+            {
+              "title": "弹窗容器",
+              "description": "使用 `Dialog`、`DialogContent`、`DialogHeader`、`DialogFooter`。"
+            },
+            {
+              "title": "表单状态",
+              "description": "使用 `react-hook-form` 配合 `Form`、`FormField`、`FormMessage`。"
+            },
+            {
+              "title": "优先级选择",
+              "description": "使用 `Select`，枚举值映射为高 / 中 / 低。"
+            },
+            {
+              "title": "日期选择",
+              "description": "使用 `Popover + Calendar`，点击输入区弹出日历。"
+            },
+            {
+              "title": "优先级展示",
+              "description": "列表项里用 `Badge` 表示高 / 中 / 低，颜色与优先级关联。"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "language": "tsx",
+          "filename": "app/[locale]/todolists/_components/todo-form-dialog.tsx",
+          "code": "type TodoFormValues = {\n  todo: string;\n  priority: \"high\" | \"medium\" | \"low\";\n  deadline: Date | undefined;\n  completed: boolean;\n};\n\ntype TodoFormDialogProps = {\n  open: boolean;\n  mode: \"create\" | \"edit\";\n  initialValues?: Partial<TodoFormValues>;\n  onOpenChange: (open: boolean) => void;\n  onSubmit: (values: TodoFormValues) => void;\n  submitting?: boolean;\n};"
+        },
+        {
+          "type": "mermaid",
+          "diagramKind": "flowchart",
+          "title": "弹窗表单交互",
+          "source": "flowchart LR\n  A[点击 新建] --> B[open dialog mode=create]\n  C[点击 编辑] --> D[open dialog mode=edit]\n  B --> E[填 todo / priority / deadline]\n  D --> E\n  E --> F[提交表单]\n  F --> G{mode}\n  G -->|create| H[create mutation]\n  G -->|edit| I[update mutation]\n  H --> J[invalidate list]\n  I --> J\n  J --> K[close dialog + toast]",
+          "complexity": "simple"
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "目录建议",
+          "body": "推荐把 `todolists` 页面拆成 `FilterBar`、`TodoItemCard`、`TodoFormDialog` 三个局部组件，页面主文件只保留查询、mutation 和派生状态。这样后续再加筛选条件或列表样式不会把 `page.tsx` 撑得更大。"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "sorting-filtering",
+      "level": 2,
+      "title": "排序与筛选规则",
+      "lead": "建议把筛选和排序放在同一个 `useMemo` 中，形成单一真相来源。",
+      "children": [
+        {
+          "type": "flowSteps",
+          "steps": [
+            {
+              "title": "步骤 1：文本筛选",
+              "description": "对 `todo` 执行 `trim().toLowerCase()` 包含匹配。",
+              "status": "pending"
+            },
+            {
+              "title": "步骤 2：状态筛选",
+              "description": "支持 `all | active | completed` 三种状态。",
+              "status": "pending"
+            },
+            {
+              "title": "步骤 3：排序",
+              "description": "未完成优先，再按优先级 high > medium > low，最后按 deadline 升序。",
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "language": "tsx",
+          "filename": "app/[locale]/todolists/page.tsx",
+          "code": "const priorityRank = { high: 0, medium: 1, low: 2 };\n\nconst visibleItems = useMemo(() => {\n  const keyword = searchValue.trim().toLowerCase();\n\n  return [...items]\n    .filter((item) => {\n      const matchText = !keyword || item.todo.toLowerCase().includes(keyword);\n      const matchStatus =\n        statusFilter === \"all\" ||\n        (statusFilter === \"active\" && !item.completed) ||\n        (statusFilter === \"completed\" && item.completed);\n\n      return matchText && matchStatus;\n    })\n    .sort((a, b) => {\n      if (a.completed !== b.completed) return Number(a.completed) - Number(b.completed);\n\n      const priorityDiff = priorityRank[a.priority] - priorityRank[b.priority];\n      if (priorityDiff !== 0) return priorityDiff;\n\n      const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Number.POSITIVE_INFINITY;\n      const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Number.POSITIVE_INFINITY;\n      return aDeadline - bDeadline;\n    });\n}, [items, searchValue, statusFilter]);"
+        },
+        {
+          "type": "table",
+          "caption": "排序优先级说明",
+          "columns": [
+            { "key": "order", "label": "优先顺序" },
+            { "key": "rule", "label": "规则" },
+            { "key": "reason", "label": "原因" }
+          ],
+          "rows": [
+            {
+              "order": "1",
+              "rule": "未完成在前，已完成在后",
+              "reason": "最符合待办列表的核心使用场景。"
+            },
+            {
+              "order": "2",
+              "rule": "高优先级在前",
+              "reason": "满足你提出的高优先度优先展示。"
+            },
+            {
+              "order": "3",
+              "rule": "deadline 更早的在前",
+              "reason": "在同优先级下更利于执行顺序。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "delivery-plan",
+      "level": 2,
+      "title": "推荐实施顺序",
+      "children": [
+        {
+          "type": "roadmap",
+          "phases": [
+            {
+              "title": "阶段 1：补数据模型",
+              "timeframe": "先做",
+              "goals": [
+                "数据库表增加 `priority`、`deadline`",
+                "request/response schema 与类型同步",
+                "service/repository 支持读写新增字段"
+              ],
+              "status": "pending"
+            },
+            {
+              "title": "阶段 2：重构页面交互",
+              "timeframe": "随后",
+              "goals": [
+                "移除页面内联新增输入区",
+                "接入 `TodoFormDialog`",
+                "新增编辑入口与状态筛选"
+              ],
+              "status": "pending"
+            },
+            {
+              "title": "阶段 3：打磨展示",
+              "timeframe": "最后",
+              "goals": [
+                "列表展示 priority badge 和 deadline 文案",
+                "完善空态、筛选态和 toast 文案",
+                "补充 i18n 文案键"
+              ],
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "type": "checklist",
+          "items": [
+            {
+              "label": "定义 priority 枚举及默认值",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "为 todo table 增加 deadline 字段并迁移",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "list/create/update 返回 priority 与 deadline",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "新增 `TodoFormDialog` 并复用 create/edit",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "实现文本 + 状态联合筛选",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "实现未完成后置规则和高优先级优先规则",
+              "checked": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "risks",
+      "level": 2,
+      "title": "风险与注意点",
+      "children": [
+        {
+          "type": "risk",
+          "title": "只做前端假数据会导致刷新丢失",
+          "description": "如果不改数据库和 service，仅在前端 state 增加 priority / deadline，页面刷新后就无法保留数据。",
+          "severity": "high",
+          "likelihood": "certain",
+          "mitigation": "优先完成 schema、repository、service 的持久化改造。",
+          "status": "open"
+        },
+        {
+          "type": "risk",
+          "title": "编辑弹窗与勾选完成状态可能产生字段覆盖",
+          "description": "当前 update 是整对象更新；若弹窗提交时没有带齐字段，可能把 `completed`、`priority` 或 `deadline` 覆盖掉。",
+          "severity": "medium",
+          "likelihood": "possible",
+          "mitigation": "统一 update DTO，保证编辑提交时传全量字段，或改为 patch 风格。",
+          "status": "open"
+        },
+        {
+          "type": "risk",
+          "title": "i18n 文案会同步增加",
+          "description": "新增优先级、deadline、编辑、新建、筛选状态后，需要补充 locale 文案。",
+          "severity": "low",
+          "likelihood": "certain",
+          "mitigation": "在 `config/locale/*/todolists.ts` 一次性补齐 key。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "open-questions",
+      "level": 2,
+      "title": "待确认项",
+      "children": [
+        {
+          "type": "openQuestion",
+          "question": "deadline 是否只需要日期，不需要具体时间？",
+          "blocking": false
+        },
+        {
+          "type": "openQuestion",
+          "question": "编辑弹窗里是否允许直接修改完成状态，还是继续只通过列表 checkbox 切换？",
+          "blocking": false
+        },
+        {
+          "type": "openQuestion",
+          "question": "priority 是否需要更多等级或颜色规范，还是固定高/中/低三档即可？",
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "type": "agentNote",
+      "visible": false,
+      "text": "Report based on direct inspection of app/[locale]/todolists/page.tsx, todolists router, request/response schemas, DB table schema, and available shadcn-style components in the design system."
+    }
+  ]
+}
