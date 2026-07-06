@@ -62,6 +62,9 @@ export class TodolistsServiceImpl implements TodolistsService {
         // Repository 插入时会覆盖为 now；此处满足 TodoTableRow 类型占位
         created_at: null,
         updated_at: null,
+        priority: data.priority,
+        deadline: data.deadline ? data.deadline.toISOString().slice(0, 10) : null,
+        // slice(0, 10) 截取日期部分
       },
     });
 
@@ -82,6 +85,8 @@ export class TodolistsServiceImpl implements TodolistsService {
       data: {
         todo: data.todo,
         completed: data.completed,
+        priority: data.priority,
+        deadline: data.deadline ? data.deadline.toISOString().slice(0, 10) : null,
       },
     });
 

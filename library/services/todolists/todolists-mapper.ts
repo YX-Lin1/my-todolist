@@ -21,6 +21,8 @@ function mapListRow(row: TodoRow) {
     id: row.id,
     todo: row.todo,
     completed: row.completed,
+    priority: row.priority,
+    deadline: row.deadline,
   };
 }
 
@@ -43,6 +45,8 @@ export function todolistsCreateResponseMapper(
       user_id: row.user_id,
       todo: row.todo,
       completed: row.completed,
+      priority: row.priority,
+      deadline: row.deadline,
       created_at: row.created_at,
       updated_at: row.updated_at,
     },
@@ -57,7 +61,9 @@ export function todolistsUpdateResponseMapper(
       id: row.id,
       todo: row.todo,
       completed: row.completed,
-      created_at: row.created_at,
+      priority: row.priority,
+      deadline: row.deadline,
+      created_at: row.created_at, 
       updated_at: row.updated_at,
     },
   });

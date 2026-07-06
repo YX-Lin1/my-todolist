@@ -3,15 +3,19 @@ import { z } from "zod";
 export const TodolistsListRequestSchema = z.object({});
 export const TodolistsCreateRequestSchema = z.object({
   data: z.object({
-    todo: z.string().trim(),
+    todo: z.string().trim().min(1),
     completed: z.boolean(),
+    priority: z.enum(["low", "medium", "high"]),
+    deadline: z.date().optional().nullable(),
   }),
 });
 export const TodolistsUpdateRequestSchema = z.object({
   data: z.object({
     id: z.pipe(z.string(), z.uuid()),
-    todo: z.string().trim(),
+    todo: z.string().trim().min(1),
     completed: z.boolean(),
+    priority: z.enum(["low", "medium", "high"]),
+    deadline: z.date().optional().nullable(),
   }),
 });
 export const TodolistsDeleteRequestSchema = z.object({

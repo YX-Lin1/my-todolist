@@ -54,6 +54,8 @@ export class TodoRepositoryImpl implements TodoRepository {
           completed: request.data.completed,
           created_at: now,
           updated_at: now,
+          priority: request.data.priority,
+          deadline: request.data.deadline,
         })
         .returning();
       const row = inserted[0];
@@ -78,6 +80,8 @@ export class TodoRepositoryImpl implements TodoRepository {
             completed: request.data.completed,
           }),
           updated_at: now,
+          priority: request.data.priority,
+          deadline: request.data.deadline,
         })
         .where(eq(todoTable.id, request.id))
         .returning();
