@@ -1,0 +1,427 @@
+{
+  "schemaVersion": "1.0.0",
+  "meta": {
+    "title": "Todolists 页面拆分方案",
+    "subtitle": "面向 `app/[locale]/todolists/page.tsx` 的职责收敛、组件拆分与渐进式重构计划",
+    "kind": "refactoring",
+    "createdAt": "2026-07-08T07:14:00.000Z",
+    "authors": ["Cursor"],
+    "tags": ["todolists", "refactor", "page", "component", "hook", "trpc"],
+    "sourceRefs": [
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/page.tsx",
+        "label": "当前 todolists 页面"
+      },
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/_components/todo-form-dialog.tsx",
+        "label": "现有表单弹窗组件"
+      },
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/_components/filter-bar.tsx",
+        "label": "预留的筛选栏组件"
+      },
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/_components/todo-item-card.tsx",
+        "label": "预留的单项卡片组件"
+      }
+    ]
+  },
+  "i18n": {
+    "defaultLocale": "zh-CN",
+    "locales": ["zh-CN"]
+  },
+  "blocks": [
+    {
+      "type": "hero",
+      "id": "hero",
+      "metrics": [
+        {
+          "title": "当前页面职责",
+          "value": "4",
+          "unit": "类",
+          "description": "数据获取、状态管理、事件处理、UI 渲染都在一个文件里"
+        },
+        {
+          "title": "建议新增文件",
+          "value": "3",
+          "unit": "个",
+          "description": "1 个 hook + 2 个新增展示组件"
+        },
+        {
+          "title": "已可复用组件",
+          "value": "2",
+          "unit": "个",
+          "description": "`filter-bar.tsx`、`todo-form-dialog.tsx`"
+        },
+        {
+          "title": "推荐策略",
+          "value": "渐进式拆分",
+          "description": "先拆 `filter-bar` 和 `todo-list`，最后收口到 hook"
+        }
+      ],
+      "badges": [
+        {
+          "label": "保留现有交互",
+          "tone": "positive",
+          "status": "pass"
+        },
+        {
+          "label": "重构风险可控",
+          "tone": "accent",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "type": "lead",
+      "text": "你的思路是合理的，但最佳拆分不是只把 JSX 从 `page.tsx` 挪到子组件，而是同时把页面级状态、tRPC mutation、派生数据和业务事件收口到一个自定义 hook。这样 `page.tsx` 才能真正只保留页面装配逻辑。"
+    },
+    {
+      "type": "section",
+      "id": "diagnosis",
+      "level": 2,
+      "title": "现状诊断",
+      "lead": "先明确为什么当前 `page.tsx` 会显得重，以及哪些内容适合拆出去。",
+      "children": [
+        {
+          "type": "statusBoard",
+          "items": [
+            {
+              "label": "列表查询",
+              "status": "in_progress",
+              "detail": "`page.tsx` 直接持有 `trpc.todolists.list.useQuery({})`。"
+            },
+            {
+              "label": "增删改 mutation",
+              "status": "in_progress",
+              "detail": "create / update / delete / logout 都写在页面内。"
+            },
+            {
+              "label": "页面状态",
+              "status": "in_progress",
+              "detail": "搜索词、弹窗开关、模式、编辑项都由页面本身维护。"
+            },
+            {
+              "label": "列表展示",
+              "status": "in_progress",
+              "detail": "单个 todo 的 checkbox、文案、删除、编辑按钮全部内联渲染。"
+            },
+            {
+              "label": "组件化程度",
+              "status": "partial",
+              "detail": "表单弹窗已经独立，但筛选栏和单项卡片还没有真正承接职责。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "当前页面中的职责与建议归属",
+          "columns": [
+            { "key": "concern", "label": "职责" },
+            { "key": "current", "label": "当前所在位置" },
+            { "key": "target", "label": "建议迁移到" }
+          ],
+          "rows": [
+            {
+              "concern": "列表查询和缓存失效",
+              "current": "`page.tsx`",
+              "target": "`useTodoPage`"
+            },
+            {
+              "concern": "搜索词、弹窗状态、编辑项",
+              "current": "`page.tsx`",
+              "target": "`useTodoPage`"
+            },
+            {
+              "concern": "搜索框和新增按钮区",
+              "current": "`page.tsx`",
+              "target": "`FilterBar`"
+            },
+            {
+              "concern": "单个 todo 行展示和按钮",
+              "current": "`page.tsx`",
+              "target": "`TodoItemCard`"
+            },
+            {
+              "concern": "头部标题和退出",
+              "current": "`page.tsx`",
+              "target": "`TodoPageHeader`"
+            },
+            {
+              "concern": "统计文案",
+              "current": "`page.tsx`",
+              "target": "`TodoListStats`"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "info",
+          "title": "关键判断",
+          "body": "如果只做 UI 组件拆分，`page.tsx` 仍会保留大量 `useState`、mutation 和事件函数，文件体积会变小，但复杂度不会真正下降。"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "target-structure",
+      "level": 2,
+      "title": "推荐目标结构",
+      "lead": "目标是让页面文件只负责装配，其余逻辑按“业务控制 / 展示组件”两层收敛，避免为了规范而过度拆分。",
+      "children": [
+        {
+          "type": "decision",
+          "id": "page-hook-split",
+          "title": "采用 page + hook + 最少展示组件 的拆法",
+          "context": "当前页面已经不只是渲染层，而是一个小型控制器；需要决定是继续把逻辑留在 page，还是迁移到 hook。",
+          "options": [
+            {
+              "label": "方案 A：只拆 JSX，不拆 hook",
+              "pros": "改动快，短期文件行数会下降。",
+              "cons": "`page.tsx` 仍会保留 query、mutation、事件与派生数据，后续再改筛选或排序时仍然难维护。"
+            },
+            {
+              "label": "方案 B：page 只装配，业务收口到 hook，只保留少量必要组件",
+              "pros": "职责清晰，同时文件数量控制在合理范围内，更适合当前页面规模。",
+              "cons": "仍需要整理 props 和 hook 返回值，但结构不会过深。"
+            }
+          ],
+          "chosen": "方案 B：page 只装配，业务收口到 hook，只保留少量必要组件",
+          "rationale": "你的目标是简化页面，而不是建立细颗粒度组件体系。保留 `page + hook + filter-bar + todo-list + form-dialog` 这个层级，能同时兼顾可维护性和目录简洁度。",
+          "status": "accepted"
+        },
+        {
+          "type": "architectureOverview",
+          "overview": {
+            "type": "mermaid",
+            "diagramKind": "flowchart",
+            "title": "拆分后的页面结构",
+            "complexity": "simple",
+            "source": "flowchart TD\n  P[page.tsx] --> H[useTodoPage]\n  P --> Filter[FilterBar]\n  P --> List[TodoList]\n  P --> Dialog[TodoFormDialog]\n  H --> Q[listQuery]\n  H --> M[create/update/delete/logout]\n  H --> S[search/dialog/editing state]\n  List --> I[item render inside todo-list]"
+          },
+          "modules": [
+            {
+              "title": "page.tsx",
+              "description": "只负责组装页面、调用 hook，并保留少量薄结构，例如 header 和 stats。"
+            },
+            {
+              "title": "useTodoPage",
+              "description": "集中管理 query、mutation、dialog 状态、搜索状态、派生数据和所有页面级事件。"
+            },
+            {
+              "title": "FilterBar",
+              "description": "承接搜索输入、占位搜索按钮、新增按钮。只接受 value / onChange / onAdd 等 props。"
+            },
+            {
+              "title": "TodoList",
+              "description": "承接列表 map、每个 item 的展示与按钮回调。当前规模下，不再单独拆 `TodoItemCard`。"
+            },
+            {
+              "title": "TodoFormDialog",
+              "description": "继续复用现有表单弹窗，只负责字段、校验和弹窗交互，不处理 mutation 分支。"
+            }
+          ]
+        },
+        {
+          "type": "fileTree",
+          "caption": "建议的目标文件结构",
+          "root": {
+            "name": "app/[locale]/todolists",
+            "children": [
+              {
+                "name": "page.tsx",
+                "change": "modified",
+                "annotation": "保留页面装配逻辑，以及 header 和 stats 这类很薄的结构"
+              },
+              {
+                "name": "_hooks",
+                "children": [
+                  {
+                    "name": "use-todo-page.ts",
+                    "change": "added",
+                    "annotation": "页面状态、mutation 和派生数据"
+                  }
+                ]
+              },
+              {
+                "name": "_components",
+                "children": [
+                  {
+                    "name": "filter-bar.tsx",
+                    "change": "modified",
+                    "annotation": "搜索栏和新增按钮"
+                  },
+                  {
+                    "name": "todo-list.tsx",
+                    "change": "added",
+                    "annotation": "列表 map 容器和单项展示"
+                  },
+                  {
+                    "name": "todo-form-dialog.tsx",
+                    "change": "modified",
+                    "annotation": "继续复用，可补 `submitting` 透传"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "execution-plan",
+      "level": 2,
+      "title": "具体拆分步骤",
+      "lead": "按影响面从小到大推进，保证每一步都能独立运行和回退。",
+      "children": [
+        {
+          "type": "checklist",
+          "items": [
+            {
+              "label": "先创建 `todo-list.tsx`，把列表 map 和单项展示整体从 `page.tsx` 中移出",
+              "checked": false,
+              "status": "pending",
+              "note": "当前 item 结构不复杂，先整体搬出去比单独拆 `TodoItemCard` 更务实。"
+            },
+            {
+              "label": "实现 `filter-bar.tsx`，接管搜索框、搜索按钮和新增按钮",
+              "checked": false,
+              "status": "pending",
+              "note": "只传入受控 props，不在组件内部自己持有业务状态。"
+            },
+            {
+              "label": "保留 header 和 stats 在 `page.tsx`，只做必要的结构清理",
+              "checked": false,
+              "status": "pending",
+              "note": "这两块内容较薄，先不额外拆文件，避免目录层级过深。"
+            },
+            {
+              "label": "最后创建 `useTodoPage`，把 query、mutation、事件和派生数据收口",
+              "checked": false,
+              "status": "pending",
+              "note": "这是本次重构的核心步骤。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "每个建议文件的职责边界",
+          "columns": [
+            { "key": "file", "label": "文件" },
+            { "key": "owns", "label": "应该负责" },
+            { "key": "avoid", "label": "尽量不要负责" }
+          ],
+          "rows": [
+            {
+              "file": "`page.tsx`",
+              "owns": "页面装配、把 hook 结果分发给组件，并保留 header 和 stats 这类薄结构",
+              "avoid": "列表渲染细节、mutation 细节、复杂派生逻辑"
+            },
+            {
+              "file": "`use-todo-page.ts`",
+              "owns": "query、mutation、dialog state、search state、事件回调、统计和过滤结果",
+              "avoid": "具体 UI 结构"
+            },
+            {
+              "file": "`filter-bar.tsx`",
+              "owns": "搜索输入区和新增入口的展示",
+              "avoid": "直接调用 tRPC 或 toast"
+            },
+            {
+              "file": "`todo-list.tsx`",
+              "owns": "列表容器、单项 todo 展示、按钮点击回调透传",
+              "avoid": "直接调用 tRPC 或自行持有页面级状态"
+            },
+            {
+              "file": "`todo-form-dialog.tsx`",
+              "owns": "表单字段、校验、弹窗展示",
+              "avoid": "决定 create / edit 的 mutation 分支"
+            }
+          ]
+        },
+        {
+          "type": "roadmap",
+          "phases": [
+            {
+              "title": "Phase 1：页面瘦身",
+              "timeframe": "第 1 步",
+              "goals": [
+                "完成 `todo-list.tsx` 与 `filter-bar.tsx`。",
+                "让 `page.tsx` 的主要 JSX 结构明显收缩。"
+              ],
+              "status": "pending"
+            },
+            {
+              "title": "Phase 2：保持结构克制",
+              "timeframe": "第 2 步",
+              "goals": [
+                "保留 header 和 stats 在 `page.tsx`。",
+                "避免为薄组件单独建文件。"
+              ],
+              "status": "pending"
+            },
+            {
+              "title": "Phase 3：业务逻辑收口",
+              "timeframe": "第 3 步",
+              "goals": [
+                "引入 `useTodoPage`。",
+                "把 query、mutation、事件与派生数据从页面中移出。"
+              ],
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "risks-and-constraints",
+      "level": 2,
+      "title": "风险与约束",
+      "lead": "拆分时需要注意不要把简单问题重构成更绕的结构。",
+      "children": [
+        {
+          "type": "risk",
+          "id": "over-smart-components",
+          "title": "子组件变成智能组件",
+          "description": "如果 `FilterBar`、`TodoList` 直接调用 tRPC 或自己管理页面级状态，重构后的依赖关系会更分散。",
+          "severity": "medium",
+          "likelihood": "possible",
+          "mitigation": "优先让子组件做纯展示和事件透传，业务逻辑集中留在 `useTodoPage`。",
+          "status": "open"
+        },
+        {
+          "type": "risk",
+          "id": "premature-abstraction",
+          "title": "过早抽象过多中间层",
+          "description": "如果一次性拆出 header、stats、item-card、types 等多个薄层文件，可能会让目录结构变复杂，反而不如现在直观。",
+          "severity": "low",
+          "likelihood": "possible",
+          "mitigation": "先采用 `page + hook + filter-bar + todo-list + form-dialog` 这组最小结构，后续确实出现复用需求时再继续拆。",
+          "status": "open"
+        },
+        {
+          "type": "constraint",
+          "rule": "本次重构应以“职责单一化”为目标，而不是机械追求文件数增加。",
+          "scope": "页面重构策略",
+          "nonNegotiable": true
+        },
+        {
+          "type": "openQuestion",
+          "question": "是否需要在这次重构中顺手把 `TodoFormDialog` 的 `submitting` 状态真正从页面透传进去，以统一禁用行为？",
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "type": "agentNote",
+      "text": "本报告已按用户确认后的最简方案收敛：保留 `page + hook + filter-bar + todo-list + form-dialog`，不再默认拆分 header、stats、todo-item-card 或 `_types`。",
+      "visible": false
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@surgeteam/design-system/components/ui/button";
-import { Input } from "@surgeteam/design-system/components/ui/input";
 import { useI18n } from "@surgeteam/i18n/use-i18n";
 import { useMemo, useState } from "react";
 import { parseTrpcError, TrpcErrorPanel } from "@/app/components/trpc-error-panel";
@@ -10,8 +9,8 @@ import { useRouter } from "@surgeteam/i18n/navigation";
 import { toast } from "sonner";
 import { translateServiceErrorCode } from "@/library/i18n/translate-service-error-code";
 import { TodoFormDialog, TodoFormValues} from "./_components/todo-form-dialog";
+import { FilterBar } from "./_components/filter-bar";
 
-/** 与 list 接口返回的 data 数组元素一致（id 为 uuid 字符串） */
 type TodoItem = {
   id: string;
   todo: string;
@@ -27,7 +26,6 @@ export default function TodolistsPage() {
 
   // 进页自动拉列表；用户身份在服务端 ctx.userId
   const listQuery = trpc.todolists.list.useQuery({});
-
   const [searchValue, setSearchValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
@@ -195,32 +193,12 @@ export default function TodolistsPage() {
           </div>
         ) : null}
 
-        <div className="flex gap-[10px]">
-          <Input
-            className="mb-2 h-10 flex-1 rounded-md p-2 text-sm"
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder={t("todolists.searchPlaceholder")}
-            type="text"
-            value={searchValue}
-          />
-          {/* 搜索为实时过滤，按钮仅占位，与旧 demo 一致 */}
-          <Button
-            className="rounded bg-[#FFBB1E] px-4 py-2 text-base text-white hover:bg-[#e0a800]"
-            size="lg"
-            type="button"
-          >
-            {t("todolists.search")}
-          </Button>
-        </div>
-
-        <Button
-          onClick={openCreateDialog}
+        <FilterBar
+          value={searchValue}
           disabled={isMutating || listQuery.isError}
-          size="lg"
-          type="button"
-        >
-          {t("todolists.add")}
-        </Button>
+          onChange={setSearchValue}
+          onAdd={openCreateDialog}
+        />
 
         {listQuery.isLoading ? (
           <p className="my-[20px] text-center text-[#666] text-[16px]">
