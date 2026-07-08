@@ -21,7 +21,7 @@ function buildSchema(t: (key: string) => string) {
   });
 }
 
-type TodoFormValues = z.infer<ReturnType<typeof buildSchema>>;
+export type TodoFormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 const DEFAULT_VALUES: TodoFormValues = {
   todo: "",
@@ -130,8 +130,7 @@ return (
               )}
             />
           </div>
-          
-        <DialogFooter>
+
           <Button type="submit" disabled={submitting} className="w-full">
             {mode === "create" ? t("todolists.submitButton") : t("todolists.updateButton")}
           </Button>
@@ -139,7 +138,7 @@ return (
           <Button type="button" variant="outline" disabled={submitting} className="w-full" onClick={() => onOpenChange(false)}>
             {t("todolists.cancelButton")}
           </Button>
-        </DialogFooter>
+
         </form>
       </Form>
     </DialogContent>

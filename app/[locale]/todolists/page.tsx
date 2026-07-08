@@ -9,12 +9,15 @@ import { trpc } from "@/library/trpc/client";
 import { useRouter } from "@surgeteam/i18n/navigation";
 import { toast } from "sonner";
 import { translateServiceErrorCode } from "@/library/i18n/translate-service-error-code";
+import { TodoFormDialog, TodoFormValues} from "./_components/todo-form-dialog";
 
 /** 与 list 接口返回的 data 数组元素一致（id 为 uuid 字符串） */
 type TodoItem = {
   id: string;
   todo: string;
   completed: boolean;
+  priority: "low" | "medium" | "high";
+  deadline: Date | null;
 };
 
 export default function TodolistsPage() {
@@ -25,8 +28,10 @@ export default function TodolistsPage() {
   // 进页自动拉列表；用户身份在服务端 ctx.userId
   const listQuery = trpc.todolists.list.useQuery({});
 
-  const [inputValue, setInputValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [editingItem, setEditingItem] = useState<TodoItem | null>(null);
 
   const toastTrpcError = (error: unknown) => {
     const { code } = parseTrpcError(error);
@@ -36,18 +41,27 @@ export default function TodolistsPage() {
   const createMutation = trpc.todolists.create.useMutation({
     onSuccess: async () => {
       await utils.todolists.list.invalidate();
-      setInputValue("");
+      setDialogOpen(false);
+      toast.success(t("todolists.createSuccess"));
     },
     onError:toastTrpcError,
   });
 
   const updateMutation = trpc.todolists.update.useMutation({
-    onSuccess: () => utils.todolists.list.invalidate(),
+    onSuccess: async () => {
+      await utils.todolists.list.invalidate();
+      setDialogOpen(false);
+      setEditingItem(null);
+      toast.success(t("todolists.updateSuccess"));
+    },
     onError:toastTrpcError,
   });
 
   const deleteMutation = trpc.todolists.delete.useMutation({
-    onSuccess: () => utils.todolists.list.invalidate(),
+    onSuccess: () => {
+      utils.todolists.list.invalidate();
+      toast.success(t("todolists.deleteSuccess"));
+    },
     onError:toastTrpcError,
   });
 
@@ -78,10 +92,16 @@ export default function TodolistsPage() {
     updateMutation.isPending ||
     deleteMutation.isPending;
 
-  const handleAddTodo = () => {
-    const todo = inputValue.trim();
-    if (!todo) return;
-    createMutation.mutate({ data: { todo, completed: false } });
+  const openCreateDialog = () => {
+    setDialogOpen(true);
+    setDialogMode("create");
+    setEditingItem(null);
+  };
+
+  const openEditDialog = (item: TodoItem) => {
+    setDialogOpen(true);
+    setDialogMode("edit");
+    setEditingItem(item);
   };
 
   const handleToggleCompleted = (item: TodoItem) => {
@@ -90,12 +110,40 @@ export default function TodolistsPage() {
         id: item.id,
         todo: item.todo,
         completed: !item.completed,
+        priority: item.priority,
+        deadline: item.deadline,
       },
     });
   };
 
   const handleDeleteTodo = (id: string) => {
     deleteMutation.mutate({ data: { id } });
+  };
+
+  const handleFormSubmit = (values: TodoFormValues) => {
+    if (dialogMode === "create") {
+      createMutation.mutate({
+        data: {
+          todo: values.todo,
+          priority: values.priority,
+          deadline: values.deadline ?? null,
+          completed: false,
+        },
+      });
+      return;
+    }
+
+    if (!editingItem) return;
+
+    updateMutation.mutate({
+      data: {
+        id: editingItem.id,
+        todo: values.todo,
+        priority: values.priority,
+        deadline: values.deadline ?? null,
+        completed: values.completed,
+      },
+    });
   };
 
   const errorLabels = {
@@ -110,6 +158,24 @@ export default function TodolistsPage() {
 
   return (
     <>
+      <TodoFormDialog
+        open={dialogOpen}
+        mode={dialogMode}
+        initialValues={
+          dialogMode === "edit" && editingItem
+            ? {
+                todo: editingItem.todo,
+                priority: editingItem.priority,
+                deadline: editingItem.deadline
+                  ? new Date(editingItem.deadline)
+                  : undefined,
+                completed: editingItem.completed,
+              }
+            : undefined
+        }
+        onOpenChange={setDialogOpen}
+        onSubmit={handleFormSubmit}
+      />
       <div className="sticky top-0 z-100 flex items-center justify-between bg-gradient-to-br from-[#FFE100B5] to-[#FFBF5FAF] px-[30px] py-4 text-white shadow-md">
         <h1 className="font-bold text-2xl">{t("todolists.title")}</h1>
         <Button className="bg-white/20 border border-white/30 text-white px-[17px] py-[8px] rounded-6 cursor-pointer text-base font-medium transition-all duration-300 hover:bg-white/50"
@@ -147,29 +213,14 @@ export default function TodolistsPage() {
           </Button>
         </div>
 
-        <div className="flex gap-[10px]">
-          <Input
-            className="mb-2 h-10 flex-1 rounded-md p-2 text-sm"
-            // 如果正在创建、更新或删除，或者有错误，则禁用输入框
-            disabled={isMutating || listQuery.isError}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAddTodo();
-            }}
-            placeholder={t("todolists.addPlaceholder")}
-            type="text"
-            value={inputValue}
-          />
-          <Button
-            className="rounded bg-[#39bd46ff] px-4 py-2 text-base text-white hover:bg-[#32a03c]"
-            disabled={isMutating || listQuery.isError}
-            onClick={handleAddTodo}
-            size="lg"
-            type="button"
-          >
-            {t("todolists.add")}
-          </Button>
-        </div>
+        <Button
+          onClick={openCreateDialog}
+          disabled={isMutating || listQuery.isError}
+          size="lg"
+          type="button"
+        >
+          {t("todolists.add")}
+        </Button>
 
         {listQuery.isLoading ? (
           <p className="my-[20px] text-center text-[#666] text-[16px]">
@@ -216,6 +267,15 @@ export default function TodolistsPage() {
                   type="button"
                 >
                   {t("todolists.delete")}
+                </Button>
+                <Button
+                  className="rounded bg-[#007bff] px-4 py-2 text-base text-white hover:bg-[#0056b3]"
+                  disabled={isMutating}
+                  onClick={() => openEditDialog(item)}
+                  size="lg"
+                  type="button"
+                >
+                  {t("todolists.edit")}
                 </Button>
               </div>
             ))}
