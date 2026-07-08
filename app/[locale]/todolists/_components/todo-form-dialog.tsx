@@ -56,7 +56,7 @@ export function TodoFormDialog({
 useEffect(() => {
   if (!open) return;
   form.reset({...DEFAULT_VALUES, ...initialValues});
-}, [form, open]);
+}, [form, open, initialValues]);
 
 return (
   <Dialog open={open} onOpenChange={onOpenChange}>
