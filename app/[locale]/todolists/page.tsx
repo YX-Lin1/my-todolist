@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { translateServiceErrorCode } from "@/library/i18n/translate-service-error-code";
 import { TodoFormDialog, TodoFormValues} from "./_components/todo-form-dialog";
 import { FilterBar } from "./_components/filter-bar";
+import { TodoList } from "./_components/todo-list";
 
 type TodoItem = {
   id: string;
@@ -114,8 +115,8 @@ export default function TodolistsPage() {
     });
   };
 
-  const handleDeleteTodo = (id: string) => {
-    deleteMutation.mutate({ data: { id } });
+  const onDeleteTodo = (item: TodoItem) => {
+    deleteMutation.mutate({ data: { id: item.id } });
   };
 
   const handleFormSubmit = (values: TodoFormValues) => {
@@ -200,65 +201,15 @@ export default function TodolistsPage() {
           onAdd={openCreateDialog}
         />
 
-        {listQuery.isLoading ? (
-          <p className="my-[20px] text-center text-[#666] text-[16px]">
-            {t("todolists.loading")}
-          </p>
-        ) : null}
-
-        {!listQuery.isLoading && !listQuery.isError && items.length === 0 ? (
-          <p className="my-[20px] text-center text-[#666] text-[16px]">
-            {t("todolists.empty")}
-          </p>
-        ) : null}
-
-        {!listQuery.isLoading && !listQuery.isError && items.length > 0 ? (
-          <div>
-            {filteredItems.map((item) => (
-              <div
-                className={`mb-[10px] flex items-center justify-between p-[5px] ${
-                  item.completed ? "bg-[#f0f0f0]" : "bg-white"
-                }`}
-                key={item.id}
-              >
-                <input
-                  checked={item.completed}
-                  className="h-[20px] w-[20px] cursor-pointer"
-                  disabled={isMutating}
-                  onChange={() => handleToggleCompleted(item)}
-                  type="checkbox"
-                />
-                <span
-                  className={`text-base ${
-                    item.completed
-                      ? "text-[#666666] line-through"
-                      : "text-[#000000]"
-                  }`}
-                >
-                  {item.todo}
-                </span>
-                <Button
-                  className="rounded bg-[#f44336] px-4 py-2 text-base text-white hover:bg-[#e53935]"
-                  disabled={isMutating}
-                  onClick={() => handleDeleteTodo(item.id)}
-                  size="lg"
-                  type="button"
-                >
-                  {t("todolists.delete")}
-                </Button>
-                <Button
-                  className="rounded bg-[#007bff] px-4 py-2 text-base text-white hover:bg-[#0056b3]"
-                  disabled={isMutating}
-                  onClick={() => openEditDialog(item)}
-                  size="lg"
-                  type="button"
-                >
-                  {t("todolists.edit")}
-                </Button>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <TodoList
+          items={filteredItems}
+          isLoading={listQuery.isLoading}
+          isError={listQuery.isError}
+          disabled={isMutating}
+          onToggleCompleted={handleToggleCompleted}
+          onDelete={onDeleteTodo}
+          onEdit={openEditDialog}
+        />
 
         {!listQuery.isError ? (
           <div className="absolute right-[20px] bottom-[5px] text-right text-[#666] text-[14px]">
