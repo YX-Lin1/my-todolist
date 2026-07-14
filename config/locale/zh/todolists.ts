@@ -11,6 +11,7 @@ export default {
   empty: "暂无待办事项，请添加！",
   stats: "总计：{total} 项 | 已完成：{done} 项 | 未完成：{pending} 项",
   loading: "加载中…",
+  error: "加载失败",
   errorTitle: "操作失败",
   errorHint: "请检查 DATABASE_MAIN_URL、MOCK_USER_ID 是否已配置，并重启 dev 服务。",
   errorDetailsLabel: "详情",

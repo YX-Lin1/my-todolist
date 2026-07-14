@@ -11,6 +11,7 @@ export default {
   empty: "やることがありません。追加してください！",
   stats: "合計：{total} 件 | 完了：{done} 件 | 未完了：{pending} 件",
   loading: "読み込み中…",
+  error: "読み込みに失敗しました",
   errorTitle: "操作に失敗しました",
   errorHint: "DATABASE_MAIN_URL と MOCK_USER_ID を確認し、開発サーバーを再起動してください。",
   errorDetailsLabel: "詳細",

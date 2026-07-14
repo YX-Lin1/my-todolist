@@ -11,6 +11,7 @@ export default {
   empty: "No todos yet. Add one!",
   stats: "Total: {total} | Done: {done} | Pending: {pending}",
   loading: "Loading...",
+  error: "Failed to load",
   errorTitle: "Operation failed",
   errorHint: "Check DATABASE_MAIN_URL and MOCK_USER_ID, then restart the dev server.",
   errorDetailsLabel: "Details",
