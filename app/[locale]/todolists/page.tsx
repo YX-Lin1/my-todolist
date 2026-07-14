@@ -11,6 +11,7 @@ import { translateServiceErrorCode } from "@/library/i18n/translate-service-erro
 import { TodoFormDialog, TodoFormValues} from "./_components/todo-form-dialog";
 import { FilterBar } from "./_components/filter-bar";
 import { TodoList } from "./_components/todo-list";
+import { TodoStats } from "./_components/todo-stats";
 
 type TodoItem = {
   id: string;
@@ -211,17 +212,11 @@ export default function TodolistsPage() {
           onEdit={openEditDialog}
         />
 
-        {!listQuery.isError ? (
-          <div className="absolute right-[20px] bottom-[5px] text-right text-[#666] text-[14px]">
-            <p>
-              {t("todolists.stats", {
-                total: String(items.length),
-                done: String(doneCount),
-                pending: String(pendingCount),
-              })}
-            </p>
-          </div>
-        ) : null}
+        <TodoStats
+          total={items.length}
+          done={doneCount}
+          pending={pendingCount}
+        />
       </div>
     </>
   );
