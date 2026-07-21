@@ -21,7 +21,7 @@ export default async function TodolistLayout({
   const cookieStore = await cookies();
   const token = cookieStore.get("MY-TOKEN")?.value;
   if(!token) {
-    redirect("/");
+    redirect("/login");
   }
   return (
       <div className="flex flex-col min-h-screen">

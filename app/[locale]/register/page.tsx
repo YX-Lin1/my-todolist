@@ -51,7 +51,7 @@ export default function RegisterPage() {
   const registerMutation = trpc.register.register.useMutation({
     onSuccess: () => {
       toast.success(t("register.success"));
-      router.push("/");
+      router.push("/login");
     },
     onError: (error) => {
       if(isTRPCClientError(error)) {
