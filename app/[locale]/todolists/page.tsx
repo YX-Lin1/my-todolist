@@ -11,7 +11,7 @@ import { useI18n } from "@surgeteam/i18n/use-i18n";
 
 export default function TodolistsPage() {
   const { t } = useI18n();
-  const { errorLabels, searchValue, setSearchValue, items, filteredItems, doneCount, pendingCount, isLoading, isError, error, isMutating, dialogOpen, setDialogOpen, dialogMode, editingItem, openCreateDialog, openEditDialog, handleFormSubmit, handleToggleCompleted, onDeleteTodo, handleLogout, todoStatus, onStatusChange } = useTodoPage();
+  const { errorLabels, searchValue, setSearchValue, items, filteredItems, doneCount, pendingCount, isLoading, isError, error, isMutating, dialogOpen, setDialogOpen, dialogMode, editingItem, openCreateDialog, openEditDialog, handleFormSubmit, handleToggleCompleted, onDeleteTodo, handleLogout, todoStatus, setTodoStatus } = useTodoPage();
 
   return (
     <>
@@ -58,7 +58,7 @@ export default function TodolistsPage() {
           disabled={isMutating || isError}
           onChange={setSearchValue}
           onAdd={openCreateDialog}
-          onStatusChange={onStatusChange}
+          onStatusChange={setTodoStatus}
         />
 
         <TodoList

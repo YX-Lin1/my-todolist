@@ -189,6 +189,6 @@ export function useTodoPage() {
     handleLogout,
     // 筛选
     todoStatus,
-    onStatusChange: setTodoStatus,
+    setTodoStatus,
   };
 }
