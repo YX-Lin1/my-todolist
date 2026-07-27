@@ -16,6 +16,8 @@ type TodoItem = {
   deadline: Date | null;
 };
 
+export type TodoStatus = "all" | "completed" | "pending";
+
 export function useTodoPage() {
   const { t } = useI18n();
   const utils = trpc.useUtils();
@@ -27,6 +29,7 @@ export function useTodoPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [editingItem, setEditingItem] = useState<TodoItem | null>(null);
+  const [todoStatus, setTodoStatus] = useState<TodoStatus>("all");
 
   const toastTrpcError = (error: unknown) => {
     const { code } = parseTrpcError(error);
@@ -73,10 +76,17 @@ export function useTodoPage() {
   const items: TodoItem[] = listQuery.data?.data ?? [];
 
   const filteredItems = useMemo(() => {
+    let result = items;
+    
+    if(todoStatus === "completed"){
+      result = result.filter((item) => item.completed);
+    }else if(todoStatus === "pending"){
+      result = result.filter((item) => !item.completed);
+    }
     const keyword = searchValue.trim().toLowerCase();
-    if (!keyword) return items;
-    return items.filter((item) => item.todo.toLowerCase().includes(keyword));
-  }, [items, searchValue]);
+    result = result.filter((item) => item.todo.toLowerCase().includes(keyword));
+    return result;
+  }, [items, searchValue, todoStatus]);
   // 只有items或searchValue变化时，才重新计算filteredItems
 
   const doneCount = items.filter((item) => item.completed).length;
@@ -177,5 +187,8 @@ export function useTodoPage() {
     handleToggleCompleted,
     onDeleteTodo,
     handleLogout,
+    // 筛选
+    todoStatus,
+    onStatusChange: setTodoStatus,
   };
 }
