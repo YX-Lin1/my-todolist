@@ -19,7 +19,7 @@ function buildSchema(t: (key: string) => string) {
   return z.object({
     todo: z.string().trim().min(1, t("todolists.validationTodo")),
     priority: z.enum(["high", "medium", "low"]),
-    deadline: z.date().optional(),
+    deadline: z.date().optional().nullable(),
     completed: z.boolean(),
   });
 }
@@ -64,7 +64,7 @@ useEffect(() => {
     return;
   }
   form.reset({...DEFAULT_VALUES, ...initialValues});
-}, [form, open, initialValues]);
+}, [open]);
 
 return (
   <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,7 +121,7 @@ return (
                   <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
-                        <Button type="button" variant="outline" className="w-full justify-start font-normal" disabled={submitting}>
+                        <Button type="button" variant="outline" className="w-auto justify-start font-normal" disabled={submitting}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {field.value ? format(field.value, "yyyy-MM-dd") : t("todolists.deadlinePlaceholder")}
                         </Button>
@@ -131,7 +131,7 @@ return (
                       {/* 弹出日历组件 */}
                       <Calendar
                         mode="single"
-                        selected={field.value}
+                        selected={field.value ?? undefined}
                         onSelect={(date) => {
                           field.onChange(date);
                           if (date) setCalendarOpen(false);
@@ -147,7 +147,7 @@ return (
                       variant="outline"
                       size="icon"
                       disabled={submitting}
-                      onClick={(e) => { e.stopPropagation(); field.onChange(undefined); }}
+                      onClick={(e) => { e.stopPropagation(); field.onChange(null); }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
