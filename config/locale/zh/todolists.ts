@@ -35,6 +35,7 @@ export default {
   priorityMedium: "中",
   priorityLow: "低",
   fieldDeadline: "截止日期",
+  deadlinePlaceholder: "选择截止日期",
   fieldCompleted: "已完成",
   submitButton: "添加",
   updateButton: "更新",

@@ -1,7 +1,7 @@
 'use client';
 import { useI18n } from "@surgeteam/i18n/use-i18n";
 import z from "zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@surgeteam/design-system/components/ui/dialog"
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@surgeteam/design-system/components/ui/select";
@@ -11,6 +11,9 @@ import { Calendar } from "@surgeteam/design-system/components/ui/calendar";
 import { Checkbox } from "@surgeteam/design-system/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@surgeteam/design-system/components/ui/form";
+import { X, CalendarIcon } from "lucide-react";
+import { format, startOfToday } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@surgeteam/design-system/components/ui/popover";
 
 function buildSchema(t: (key: string) => string) {
   return z.object({
@@ -48,13 +51,18 @@ export function TodoFormDialog({
   onSubmit,
 }: TodoFormDialogProps) {
   const {t} = useI18n();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const today = startOfToday();
   const form = useForm<TodoFormValues>({
     resolver: zodResolver(buildSchema(t)),
     defaultValues: DEFAULT_VALUES,
   });
 
 useEffect(() => {
-  if (!open) return;
+  if (!open) {
+    setCalendarOpen(false);
+    return;
+  }
   form.reset({...DEFAULT_VALUES, ...initialValues});
 }, [form, open, initialValues]);
 
@@ -103,19 +111,52 @@ return (
               )}
             />
 
-          <div className="space-y-2">
-            <FormField
-              control={form.control}
-              name="deadline"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("todolists.fieldDeadline")}</FormLabel>
-                  <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={submitting} />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="deadline"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("todolists.fieldDeadline")}</FormLabel>
+                <div className="flex gap-2">
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button type="button" variant="outline" className="w-full justify-start font-normal" disabled={submitting}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "yyyy-MM-dd") : t("todolists.deadlinePlaceholder")}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      {/* 弹出日历组件 */}
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          if (date) setCalendarOpen(false);
+                        }}
+                        disabled={(date) => date < today}
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {field.value ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      disabled={submitting}
+                      onClick={(e) => { e.stopPropagation(); field.onChange(undefined); }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="space-y-2">
             <FormField

@@ -35,6 +35,7 @@ export default {
   priorityMedium: "Medium",
   priorityLow: "Low",
   fieldDeadline: "Deadline",
+  deadlinePlaceholder: "Select deadline",
   fieldCompleted: "Completed",
   submitButton: "Add",
   updateButton: "Update",

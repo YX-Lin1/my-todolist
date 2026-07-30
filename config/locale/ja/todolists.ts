@@ -35,6 +35,7 @@ export default {
   priorityMedium: "中",
   priorityLow: "低",
   fieldDeadline: "期限",
+  deadlinePlaceholder: "期限を選択",
   fieldCompleted: "完了",
   submitButton: "追加",
   updateButton: "更新",
