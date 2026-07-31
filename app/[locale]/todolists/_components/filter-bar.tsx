@@ -25,10 +25,9 @@ export function FilterBar({
   const { t } = useI18n();
 
   return (
-    <>
-    <div className="flex gap-[10px]">
+    <div className="flex w-full flex-wrap items-center gap-[10px]">
       <Input
-        className="mb-2 h-10 flex-1 rounded-md p-2 text-sm"
+        className="h-10 min-w-0 flex-1 rounded-md p-2 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t("todolists.searchPlaceholder")}
@@ -39,7 +38,7 @@ export function FilterBar({
         value={todoStatus}
         onValueChange={onStatusChange}
       >
-        <SelectTrigger>
+        <SelectTrigger className="h-10 w-[120px] shrink-0">
           <SelectValue placeholder={t("todolists.statusPlaceholder")} />
         </SelectTrigger>
         <SelectContent>
@@ -54,22 +53,20 @@ export function FilterBar({
       </Select>
 
       <Button
-        className="rounded bg-[#FFBB1E] px-4 py-2 text-base text-white hover:bg-[#e0a800]"
-        size="lg"
+        className="h-10 shrink-0 rounded bg-[#FFBB1E] px-4 text-base text-white hover:bg-[#e0a800]"
         type="button"
       >
         {t("todolists.search")}
       </Button>
-    </div>
 
-    <Button
+      <Button
+        className="h-10 shrink-0 rounded bg-[#4CAF50] px-4 text-base text-white hover:bg-[#45a049]"
         onClick={onAdd}
         disabled={disabled}
-        size="lg"
         type="button"
       >
         {t("todolists.add")}
       </Button>
-    </>
+    </div>
   );
 }
