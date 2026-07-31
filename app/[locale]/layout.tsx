@@ -13,6 +13,7 @@ import { ReactQueryProvider } from "@/library/react-query/provider";
 
 import { PageShell } from "@/app/components/page-shell";
 import { TRPCProvider } from "@/library/trpc/provider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -47,7 +48,9 @@ export default async function RootLayout({
             >
               <ReactQueryProvider>
                 <TRPCProvider>
-                  <PageShell>{children}</PageShell>
+                  <NuqsAdapter>
+                    <PageShell>{children}</PageShell>
+                  </NuqsAdapter>
                 </TRPCProvider>
               </ReactQueryProvider>
             </AnalyticsProvider>

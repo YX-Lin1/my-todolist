@@ -1,0 +1,562 @@
+{
+  "schemaVersion": "1.0.0",
+  "meta": {
+    "title": "Todolists URL 筛选改造方案（nuqs）",
+    "subtitle": "把 searchValue / todoStatus 从 useState 迁到 URL query，保持 FilterBar 与 CRUD 交互不变",
+    "kind": "refactoring",
+    "createdAt": "2026-07-31T07:15:00.000Z",
+    "authors": ["Cursor"],
+    "tags": ["todolists", "nuqs", "searchParams", "url-state", "filter", "refactor"],
+    "sourceRefs": [
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/_hooks/use-todo-page.ts",
+        "label": "页面状态与筛选逻辑"
+      },
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/_components/filter-bar.tsx",
+        "label": "筛选栏 UI"
+      },
+      {
+        "type": "path",
+        "value": "app/[locale]/todolists/page.tsx",
+        "label": "页面装配"
+      },
+      {
+        "type": "path",
+        "value": "app/[locale]/layout.tsx",
+        "label": "locale 根布局（需挂 NuqsAdapter）"
+      },
+      {
+        "type": "url",
+        "value": "https://nuqs.dev/docs/adapters/next/app",
+        "label": "nuqs Next.js App Router Adapter"
+      }
+    ]
+  },
+  "i18n": {
+    "defaultLocale": "zh-CN",
+    "locales": ["zh-CN"]
+  },
+  "blocks": [
+    {
+      "type": "hero",
+      "id": "hero",
+      "metrics": [
+        {
+          "title": "迁入 URL 的状态",
+          "value": "2",
+          "unit": "个",
+          "description": "`q`（搜索）与 `status`（完成状态）",
+          "tone": "accent"
+        },
+        {
+          "title": "继续用 useState",
+          "value": "3",
+          "unit": "类",
+          "description": "弹窗开关、模式、编辑项（临时 UI）"
+        },
+        {
+          "title": "预计改动文件",
+          "value": "3",
+          "unit": "处",
+          "description": "依赖安装 + layout adapter + use-todo-page"
+        },
+        {
+          "title": "FilterBar / page 改动",
+          "value": "0~极小",
+          "description": "props 契约可保持不变"
+        }
+      ],
+      "badges": [
+        {
+          "label": "学习向改造",
+          "tone": "accent",
+          "status": "pending"
+        },
+        {
+          "label": "不改后端 API",
+          "tone": "positive",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "type": "lead",
+      "text": "目标不是重写 todolists，而是把筛选条件的 SSOT 从 React 内存换成地址栏。安装 `nuqs`、挂上 `NuqsAdapter`，再在 `useTodoPage` 里用 `useQueryState` / `useQueryStates` 替换 `searchValue` 与 `todoStatus` 即可；弹窗与 mutation 保持 `useState`。"
+    },
+    {
+      "type": "section",
+      "id": "goal",
+      "level": 2,
+      "title": "改造目标与边界",
+      "lead": "先划清「进 URL」和「不进 URL」，避免把临时 UI 状态也塞进 query。",
+      "children": [
+        {
+          "type": "comparison",
+          "labelBefore": "进 URL",
+          "labelAfter": "继续 useState",
+          "before": [
+            {
+              "type": "bulletList",
+              "items": [
+                "`searchValue` → `?q=`",
+                "`todoStatus` → `?status=all|completed|pending`",
+                "刷新 / 分享 / 前进后退可恢复筛选"
+              ]
+            }
+          ],
+          "after": [
+            {
+              "type": "bulletList",
+              "items": [
+                "`dialogOpen` / `dialogMode` / `editingItem`",
+                "mutation pending、toast、错误展示",
+                "列表数据本身（仍由 tRPC `list` 提供）"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "constraint",
+          "rule": "本阶段只做客户端过滤：仍先拉全量列表，再按 URL 中的 `q`/`status` 做 `useMemo` 过滤。不改 tRPC `todolists.list` 入参。",
+          "scope": "本次学习改造",
+          "nonNegotiable": true
+        },
+        {
+          "type": "constraint",
+          "rule": "`FilterBar` 的 props 形状尽量不动：仍接收 `value` / `onChange` / `todoStatus` / `onStatusChange`，由 hook 内部对接 nuqs。",
+          "scope": "UI 契约",
+          "nonNegotiable": false
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "current-state",
+      "level": 2,
+      "title": "现状：状态存在哪里",
+      "lead": "当前筛选是内存 state；刷新即丢。",
+      "children": [
+        {
+          "type": "code",
+          "filename": "app/[locale]/todolists/_hooks/use-todo-page.ts",
+          "language": "tsx",
+          "highlightLines": [28, 32],
+          "code": "const [searchValue, setSearchValue] = useState(\"\");\nconst [dialogOpen, setDialogOpen] = useState(false);\nconst [dialogMode, setDialogMode] = useState<\"create\" | \"edit\">(\"create\");\nconst [editingItem, setEditingItem] = useState<TodoItem | null>(null);\nconst [todoStatus, setTodoStatus] = useState<TodoStatus>(\"all\");"
+        },
+        {
+          "type": "keyValueList",
+          "layout": "stacked",
+          "items": [
+            {
+              "key": "数据流",
+              "value": "`FilterBar` → `setSearchValue` / `setTodoStatus` → `useMemo(filteredItems)` → `TodoList`"
+            },
+            {
+              "key": "URL",
+              "value": "始终是 `/todolists`（或带 locale 前缀），不含筛选信息"
+            },
+            {
+              "key": "nuqs 依赖",
+              "value": "`package.json` 中尚未安装 `nuqs`"
+            }
+          ]
+        },
+        {
+          "type": "mermaid",
+          "diagramKind": "flowchart",
+          "title": "改造前数据流",
+          "complexity": "simple",
+          "source": "flowchart LR\n  FB[FilterBar] -->|onChange / onStatusChange| ST[useState in useTodoPage]\n  ST --> MEMO[useMemo filteredItems]\n  MEMO --> LIST[TodoList]\n  URL[(Browser URL)] -.->|不参与| ST"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "target-architecture",
+      "level": 2,
+      "title": "目标架构",
+      "lead": "筛选读写走 URL；其余页面状态不变。",
+      "children": [
+        {
+          "type": "mermaid",
+          "diagramKind": "flowchart",
+          "title": "改造后数据流",
+          "complexity": "simple",
+          "source": "flowchart LR\n  FB[FilterBar] -->|onChange / onStatusChange| NUQS[useQueryStates q + status]\n  NUQS -->|router.replace| URL[(?q=&status=)]\n  URL -->|hydrate on load| NUQS\n  NUQS --> MEMO[useMemo filteredItems]\n  MEMO --> LIST[TodoList]\n  DIALOG[dialog useState] -.->|不影响 URL| PAGE[page.tsx]"
+        },
+        {
+          "type": "definitionList",
+          "items": [
+            {
+              "term": "q",
+              "definition": "搜索关键词；空字符串视为默认值，从 URL 中省略。"
+            },
+            {
+              "term": "status",
+              "definition": "`all | completed | pending`；默认 `all`，默认值不写进 URL。"
+            },
+            {
+              "term": "NuqsAdapter",
+              "definition": "App Router 下必须在 layout 的 `<body>` 内包裹；否则 `useQueryState` 无法正确同步。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "decisions",
+      "level": 2,
+      "title": "关键决策",
+      "children": [
+        {
+          "type": "decision",
+          "id": "dec-nuqs-vs-native",
+          "title": "用 nuqs，而不是手写 useSearchParams",
+          "context": "原生方案也能做，但要手搓 URLSearchParams、默认值删除、批量更新与防抖。",
+          "options": [
+            {
+              "label": "nuqs",
+              "pros": "接近 useState API；内置 parser / default / throttle；批量更新更稳。",
+              "cons": "多一个依赖，需要挂 Adapter。"
+            },
+            {
+              "label": "原生 useSearchParams + router.replace",
+              "pros": "零依赖。",
+              "cons": "样板代码多，搜索防抖与默认值清理易踩坑。"
+            }
+          ],
+          "chosen": "nuqs",
+          "rationale": "学习成本低，且与现有 hook 心智一致：把两行 useState 换成两行 useQueryState 即可。",
+          "status": "accepted"
+        },
+        {
+          "type": "decision",
+          "id": "dec-history",
+          "title": "搜索输入用 replace + 节流，状态切换可用 push",
+          "context": "每个按键都 push 会污染浏览器历史。",
+          "options": [
+            {
+              "label": "q：replace + throttle；status：replace 或 push",
+              "pros": "历史干净，后退仍可回到上一次有意义的筛选。",
+              "cons": "需理解 nuqs 的 history / throttleMs 选项。"
+            },
+            {
+              "label": "全部 push",
+              "pros": "实现简单。",
+              "cons": "搜索时历史爆炸。"
+            }
+          ],
+          "chosen": "q 用 replace + throttle；status 用 replace（学习阶段足够）",
+          "rationale": "先保证体验正确；若以后想「后退=撤销上一次状态筛选」，再把 status 改成 push。",
+          "status": "accepted"
+        },
+        {
+          "type": "decision",
+          "id": "dec-api-shape",
+          "title": "对外仍暴露 searchValue / setSearchValue / todoStatus / setTodoStatus",
+          "context": "`page.tsx` 与 `FilterBar` 已依赖这组名字。",
+          "chosen": "hook 内部用 nuqs，return 别名保持兼容",
+          "rationale": "减小 diff，把改造集中在 `use-todo-page.ts`。",
+          "status": "accepted"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "implementation-plan",
+      "level": 2,
+      "title": "分步改造计划",
+      "lead": "按依赖顺序做；前两步与业务逻辑无关，第三步才动筛选。",
+      "children": [
+        {
+          "type": "flowSteps",
+          "steps": [
+            {
+              "title": "Step 1：安装 nuqs",
+              "description": "在项目根执行 `pnpm add nuqs`。当前 Next 为 16.x，满足 App Router adapter 要求（≥14.2）。",
+              "status": "pending"
+            },
+            {
+              "title": "Step 2：在 locale layout 挂 NuqsAdapter",
+              "description": "于 `app/[locale]/layout.tsx` 的 `<body>` 内、现有 Provider 树中包裹 `NuqsAdapter`（建议紧挨 `TRPCProvider` 内外均可，但必须包住会用到 nuqs 的子树）。",
+              "status": "pending"
+            },
+            {
+              "title": "Step 3：改造 useTodoPage 筛选 state",
+              "description": "删除 `searchValue`/`todoStatus` 的 `useState`；改用 `useQueryStates`（或两个 `useQueryState`）；`useMemo` 依赖改为新变量；return 字段名保持不变。",
+              "status": "pending"
+            },
+            {
+              "title": "Step 4：手测 URL 行为",
+              "description": "输入搜索、切换状态、刷新、复制链接、浏览器后退；确认弹窗开关不进 URL。",
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "type": "fileChangeList",
+          "items": [
+            {
+              "path": "package.json / pnpm-lock.yaml",
+              "change": "modified",
+              "note": "新增依赖 `nuqs`"
+            },
+            {
+              "path": "app/[locale]/layout.tsx",
+              "change": "modified",
+              "note": "引入并包裹 `NuqsAdapter` from `nuqs/adapters/next/app`"
+            },
+            {
+              "path": "app/[locale]/todolists/_hooks/use-todo-page.ts",
+              "change": "modified",
+              "note": "筛选 state 迁到 URL；过滤逻辑与 CRUD 不变"
+            },
+            {
+              "path": "app/[locale]/todolists/page.tsx",
+              "change": "modified",
+              "note": "理想情况无需改；若 hook 返回名不变则 0 diff"
+            },
+            {
+              "path": "app/[locale]/todolists/_components/filter-bar.tsx",
+              "change": "modified",
+              "note": "理想情况无需改"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "code-changes",
+      "level": 2,
+      "title": "关键代码怎么改",
+      "children": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "1) Layout：挂上 Adapter"
+        },
+        {
+          "type": "code",
+          "filename": "app/[locale]/layout.tsx（示意）",
+          "language": "tsx",
+          "code": "import { NuqsAdapter } from \"nuqs/adapters/next/app\";\n\n// 放在 <body> 内，包住会使用 nuqs 的子树\n<DesignSystemProvider ...>\n  <I18nProvider>\n    <ReactQueryProvider>\n      <TRPCProvider>\n        <NuqsAdapter>\n          <PageShell>{children}</PageShell>\n        </NuqsAdapter>\n      </TRPCProvider>\n    </ReactQueryProvider>\n  </I18nProvider>\n</DesignSystemProvider>"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "2) Hook：用 useQueryStates 替换两行 useState"
+        },
+        {
+          "type": "codeDiff",
+          "filename": "app/[locale]/todolists/_hooks/use-todo-page.ts",
+          "language": "tsx",
+          "before": "const [searchValue, setSearchValue] = useState(\"\");\nconst [todoStatus, setTodoStatus] = useState<TodoStatus>(\"all\");",
+          "after": "import { parseAsString, parseAsStringEnum, useQueryStates } from \"nuqs\";\n\nconst todoStatusParser = parseAsStringEnum<\n  TodoStatus\n>([\"all\", \"completed\", \"pending\"]).withDefault(\"all\");\n\nconst [filters, setFilters] = useQueryStates(\n  {\n    q: parseAsString.withDefault(\"\"),\n    status: todoStatusParser,\n  },\n  {\n    history: \"replace\",\n    // 搜索输入节流，避免每个按键都写 URL\n    throttleMs: 300,\n  },\n);\n\nconst searchValue = filters.q;\nconst todoStatus = filters.status;\nconst setSearchValue = (q: string) => {\n  void setFilters({ q: q || null }); // null 可清掉默认空 q\n};\nconst setTodoStatus = (status: TodoStatus) => {\n  void setFilters({ status: status === \"all\" ? null : status });\n};"
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "为什么推荐 useQueryStates",
+          "body": "一次更新可同时改多个 query（例如以后加排序），且与 `throttleMs` / `history` 共用一份选项。两个独立 `useQueryState` 也可以，学习期同样够用。"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "3) useMemo：依赖跟着新变量走"
+        },
+        {
+          "type": "paragraph",
+          "text": "`filteredItems` 的过滤逻辑**不用改**，只要依赖数组仍是 `[items, searchValue, todoStatus]`。`page.tsx` 继续把 `searchValue` / `setSearchValue` / `todoStatus` / `setTodoStatus` 传给 `FilterBar`。"
+        },
+        {
+          "type": "collapsible",
+          "summary": "可选：完整 hook 筛选片段参考",
+          "defaultOpen": false,
+          "children": [
+            {
+              "type": "code",
+              "filename": "use-todo-page.ts（筛选相关片段）",
+              "language": "tsx",
+              "maxLines": 40,
+              "code": "const [filters, setFilters] = useQueryStates(\n  {\n    q: parseAsString.withDefault(\"\"),\n    status: parseAsStringEnum<[\"all\", \"completed\", \"pending\"]>([\n      \"all\",\n      \"completed\",\n      \"pending\",\n    ]).withDefault(\"all\"),\n  },\n  { history: \"replace\", throttleMs: 300 },\n);\n\nconst searchValue = filters.q;\nconst todoStatus = filters.status;\n\nconst filteredItems = useMemo(() => {\n  let result = items;\n  if (todoStatus === \"completed\") {\n    result = result.filter((item) => item.completed);\n  } else if (todoStatus === \"pending\") {\n    result = result.filter((item) => !item.completed);\n  }\n  const keyword = searchValue.trim().toLowerCase();\n  return result.filter((item) =>\n    item.todo.toLowerCase().includes(keyword),\n  );\n}, [items, searchValue, todoStatus]);\n\n// return 仍暴露：\n// searchValue, setSearchValue, todoStatus, setTodoStatus"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "url-examples",
+      "level": 2,
+      "title": "期望的 URL 形态",
+      "children": [
+        {
+          "type": "table",
+          "caption": "用户操作 ↔ 地址栏",
+          "columns": [
+            { "key": "action", "label": "操作" },
+            { "key": "url", "label": "URL（示意，含 locale）", "cellKind": "code" },
+            { "key": "note", "label": "说明" }
+          ],
+          "rows": [
+            {
+              "action": "默认进入页面",
+              "url": "/zh/todolists",
+              "note": "无 q、无 status（默认 all）"
+            },
+            {
+              "action": "选「未完成」",
+              "url": "/zh/todolists?status=pending",
+              "note": "status 非默认才出现"
+            },
+            {
+              "action": "再搜「买菜」",
+              "url": "/zh/todolists?q=%E4%B9%B0%E8%8F%9C&status=pending",
+              "note": "中文会 URL encode"
+            },
+            {
+              "action": "清空搜索并回到全部",
+              "url": "/zh/todolists",
+              "note": "回到干净 URL"
+            },
+            {
+              "action": "打开新建弹窗",
+              "url": "不变",
+              "note": "dialog 不进 query"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "checklist",
+      "level": 2,
+      "title": "验收清单",
+      "children": [
+        {
+          "type": "checklist",
+          "items": [
+            {
+              "label": "`pnpm add nuqs` 后 `layout.tsx` 已包裹 `NuqsAdapter`",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "输入搜索后，刷新页面仍保留搜索词与过滤结果",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "切换 status 后，复制 URL 在新标签打开得到相同筛选",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "默认 `all` + 空搜索时，地址栏没有多余 `?status=all&q=`",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "快速打字时 URL 有节流，不会每个字母都立刻跳变（或可接受轻微延迟）",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "打开/关闭创建编辑弹窗，URL 不变",
+              "checked": false,
+              "status": "pending"
+            },
+            {
+              "label": "增删改、完成切换、登出行为与改造前一致",
+              "checked": false,
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "risks",
+      "level": 2,
+      "title": "风险与注意点",
+      "children": [
+        {
+          "type": "risk",
+          "id": "risk-adapter",
+          "title": "忘记挂 NuqsAdapter",
+          "description": "hooks 可能报错或不同步 URL。",
+          "severity": "high",
+          "likelihood": "possible",
+          "mitigation": "Step 2 先做完再改 hook；对照官方 `nuqs/adapters/next/app`。",
+          "status": "open"
+        },
+        {
+          "type": "risk",
+          "id": "risk-i18n-path",
+          "title": "locale 前缀路由",
+          "description": "项目使用 `[locale]`；nuqs 只管理 query string，一般不影响 pathname。但若自定义 navigation 与 adapter 冲突，需回归测试。",
+          "severity": "medium",
+          "likelihood": "unlikely",
+          "mitigation": "在 zh/en/ja 各测一次筛选 URL；确认 `useRouter` 来自 `@surgeteam/i18n/navigation` 的登出跳转仍正常。",
+          "status": "open"
+        },
+        {
+          "type": "risk",
+          "id": "risk-suspense",
+          "title": "searchParams 与 Suspense",
+          "description": "官方建议使用 searchParams 的 Client 组件外包 Suspense。当前 `todolists/page.tsx` 已是整页 `'use client'`，通常可先直接用；若遇到静态壳预渲染警告，再把页面拆成 Server shell + Client 列表并加 Suspense。",
+          "severity": "low",
+          "likelihood": "possible",
+          "mitigation": "先实现；出现警告再加 boundary，不阻塞学习改造。",
+          "status": "open"
+        },
+        {
+          "type": "assumption",
+          "statement": "短期内列表仍全量拉取后前端过滤；数据量变大后再把 `q`/`status` 下沉到 tRPC list 入参。",
+          "validated": true
+        },
+        {
+          "type": "openQuestion",
+          "question": "是否要把「优先级 / 排序」也一并 URL 化？建议本轮不做，先稳 `q` + `status`。",
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "learning-takeaways",
+      "level": 2,
+      "title": "这轮改造你在学什么",
+      "children": [
+        {
+          "type": "bulletList",
+          "items": [
+            "**SSOT 换位置**：筛选真相从组件内存 → URL",
+            "**哪些状态适合进 URL**：可分享的视图状态；临时 UI 不要进",
+            "**App Router 适配器模式**：第三方库如何挂进 layout Provider 树",
+            "**history.replace vs push**：控制浏览器后退栈",
+            "**为后续服务端过滤铺路**：URL 参数将来可直接传给 API"
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "info",
+          "title": "建议动手顺序",
+          "body": "先完成 Step 1–3 的最小可运行版本（甚至可以先不做 throttle），确认刷新/分享可用后，再加 `throttleMs` 与默认值清理细节。"
+        }
+      ]
+    },
+    {
+      "type": "agentNote",
+      "visible": false,
+      "text": "Generated for my-todolist learning path. Scope deliberately excludes server-side list filtering and login/register refactors. Code snippets are illustrative; exact null-clearing API for nuqs defaults may vary slightly by nuqs major version — validate against installed package docs when implementing."
+    }
+  ]
+}

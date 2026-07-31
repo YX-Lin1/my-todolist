@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { translateServiceErrorCode } from "@/library/i18n/translate-service-error-code";
 import { TodoFormValues } from "../_components/todo-form-dialog";
 import { useI18n } from "@surgeteam/i18n/use-i18n";
+import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 type TodoItem = {
   id: string;
@@ -25,11 +26,31 @@ export function useTodoPage() {
 
   // 进页自动拉列表；用户身份在服务端 ctx.userId
   const listQuery = trpc.todolists.list.useQuery({});
-  const [searchValue, setSearchValue] = useState("");
+  const todoStatusParser = parseAsStringEnum<TodoStatus>(["all", "completed", "pending"]).withDefault("all");
+  // status 只能是 "all" / "completed" / "pending" 之一，其他值会被重置为 "all"
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [editingItem, setEditingItem] = useState<TodoItem | null>(null);
-  const [todoStatus, setTodoStatus] = useState<TodoStatus>("all");
+    
+  const [filters, setFilters] = useQueryStates(
+    {
+      q: parseAsString,
+      status: todoStatusParser,
+    },
+    {
+      history: "replace",
+      throttleMs: 300,
+    }
+  );
+  const searchValue = filters.q;
+  const todoStatus = filters.status;
+  const setSearchValue = (q: string) => {
+    setFilters({ q });
+  };
+  const setTodoStatus = (status: TodoStatus) => {
+    setFilters({ status: status === "all" ? null : status });
+  };
 
   const toastTrpcError = (error: unknown) => {
     const { code } = parseTrpcError(error);
@@ -83,7 +104,7 @@ export function useTodoPage() {
     }else if(todoStatus === "pending"){
       result = result.filter((item) => !item.completed);
     }
-    const keyword = searchValue.trim().toLowerCase();
+    const keyword = searchValue?.trim().toLowerCase() ?? "";
     result = result.filter((item) => item.todo.toLowerCase().includes(keyword));
     return result;
   }, [items, searchValue, todoStatus]);

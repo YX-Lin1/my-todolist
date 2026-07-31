@@ -54,7 +54,7 @@ export default function TodolistsPage() {
 
         <FilterBar
           todoStatus={todoStatus}
-          value={searchValue}
+          value={searchValue ?? ""}
           disabled={isMutating || isError}
           onChange={setSearchValue}
           onAdd={openCreateDialog}
