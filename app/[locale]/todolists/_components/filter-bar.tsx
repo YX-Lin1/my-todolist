@@ -25,7 +25,7 @@ export function FilterBar({
   const { t } = useI18n();
 
   return (
-    <div className="flex w-full flex-wrap items-center gap-[10px]">
+    <div className="mb-5 flex w-full flex-wrap items-center gap-[10px]">
       <Input
         className="h-10 min-w-0 flex-1 rounded-md p-2 text-sm"
         value={value}
